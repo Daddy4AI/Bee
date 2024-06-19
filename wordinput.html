@@ -2,13 +2,9 @@
 <html>
 <head>
   <title>Word Input</title>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
-  <script src="./firebaseConfig.js"></script>
-  <script>
-    // Initialize Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
-    import { getDatabase, ref, push, get, set } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+  <script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+    import { getDatabase, ref, get, set, push } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
     import firebaseConfig from './firebaseConfig.js';
 
     const app = initializeApp(firebaseConfig);
@@ -17,15 +13,16 @@
     function uploadWords() {
       const file = document.getElementById('wordFile').files[0];
       const reader = new FileReader();
-      
+
       reader.onload = function(event) {
         const words = event.target.result.split('\n').map(word => word.trim()).filter(word => word);
         const wordListRef = ref(database, 'wordlist');
         get(wordListRef).then(snapshot => {
           const data = snapshot.val() || [];
           const updatedData = [...data, ...words];
-          set(wordListRef, updatedData);
-          document.getElementById('status').innerText = 'Words uploaded successfully';
+          set(wordListRef, updatedData).then(() => {
+            document.getElementById('status').innerText = 'Words uploaded successfully';
+          });
         });
       };
 
