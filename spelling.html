@@ -2,6 +2,16 @@
 <html>
 <head>
   <title>Spelling Test</title>
+  <style>
+    #result.correct {
+      font-size: 20px;
+      color: green;
+    }
+    #result.incorrect {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
     import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
@@ -26,27 +36,40 @@
     });
 
     function displayWord() {
+      if (words.length === 0) return;
       const word = words[currentWordIndex].word;
       const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
       speechSynthesis.speak(utterance);
       document.getElementById('wordNumber').innerText = `Word ${currentWordIndex + 1} of ${words.length}`;
+      document.getElementById('spellingInput').value = '';
+      document.getElementById('spellingInput').focus();
     }
 
     window.checkSpelling = function() {
       const input = document.getElementById('spellingInput').value.trim();
       const word = words[currentWordIndex].word;
+      const resultElement = document.getElementById('result');
       if (input === word) {
-        document.getElementById('result').innerText = 'Correct!';
+        resultElement.innerText = '正确';
+        resultElement.className = 'correct';
         currentWordIndex++;
         if (currentWordIndex < words.length) {
           displayWord();
         } else {
-          document.getElementById('result').innerText = 'Test completed!';
+          resultElement.innerText = '测试完成！';
         }
       } else {
-        document.getElementById('result').innerText = `Incorrect! The correct spelling is ${word}`;
+        resultElement.innerHTML = `错误，正确拼写为 <strong>${word}</strong>`;
+        resultElement.className = 'incorrect';
       }
     };
+
+    window.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        checkSpelling();
+      }
+    });
   </script>
 </head>
 <body>
