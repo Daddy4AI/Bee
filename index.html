@@ -13,12 +13,18 @@
     document.addEventListener('DOMContentLoaded', function() {
       const wordListRef = ref(database, 'wordlist');
       get(wordListRef).then(snapshot => {
-        const words = snapshot.val() || [];
-        const groups = [];
-        for (let i = 0; i < words.length; i += 100) {
-          groups.push(words.slice(i, i + 100));
+        if (snapshot.exists()) {
+          const words = snapshot.val() || [];
+          const groups = [];
+          for (let i = 0; i < words.length; i += 100) {
+            groups.push(words.slice(i, i + 100));
+          }
+          displayGroups(groups);
+        } else {
+          console.log("No data available");
         }
-        displayGroups(groups);
+      }).catch(error => {
+        console.error("Error getting data: ", error);
       });
     });
 
@@ -33,9 +39,9 @@
       });
     }
 
-    function startTest(groupNumber) {
+    window.startTest = function(groupNumber) {
       window.location.href = `spelling.html?group=${groupNumber}`;
-    }
+    };
   </script>
 </head>
 <body>

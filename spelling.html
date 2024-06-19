@@ -32,7 +32,7 @@
       document.getElementById('wordNumber').innerText = `Word ${currentWordIndex + 1} of ${words.length}`;
     }
 
-    function checkSpelling() {
+    window.checkSpelling = function() {
       const input = document.getElementById('spellingInput').value.trim();
       const word = words[currentWordIndex].word;
       if (input === word) {
@@ -46,7 +46,7 @@
       } else {
         document.getElementById('result').innerText = `Incorrect! The correct spelling is ${word}`;
       }
-    }
+    };
   </script>
 </head>
 <body>

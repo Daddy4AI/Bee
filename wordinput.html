@@ -19,9 +19,6 @@
         const wordListRef = ref(database, 'wordlist');
         get(wordListRef).then(snapshot => {
           const data = snapshot.val() || [];
-          const updatedData = [...data, ...words];
-          const totalWords = updatedData.length;
-
           const progressBar = document.getElementById('progressBar');
           progressBar.max = words.length;
 
