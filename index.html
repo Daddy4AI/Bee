@@ -2,9 +2,22 @@
 <html>
 <head>
   <title>Word Groups</title>
+  <style>
+    .group {
+      border: 2px solid;
+      padding: 20px;
+      margin: 10px;
+    }
+    .tested {
+      border-color: lightblue;
+    }
+    .not-tested {
+      border-color: lightgreen;
+    }
+  </style>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+    import { getDatabase, ref, get, child } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
     import firebaseConfig from './firebaseConfig.js';
 
     const app = initializeApp(firebaseConfig);
@@ -12,17 +25,41 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       const wordListRef = ref(database, 'wordlist');
+      const testResultsRef = ref(database, 'testResults');
+
       get(wordListRef).then(snapshot => {
-        if (snapshot.exists()) {
-          const words = snapshot.val() || [];
-          const groups = [];
-          for (let i = 0; i < words.length; i += 100) {
-            groups.push(words.slice(i, i + 100));
-          }
-          displayGroups(groups);
-        } else {
-          console.log("No data available");
+        const words = snapshot.val() || [];
+        const groups = [];
+        for (let i = 0; i < words.length; i += 100) {
+          groups.push(words.slice(i, i + 100));
         }
+        Promise.all(groups.map((group, index) => {
+          return Promise.all(group.map(word => {
+            return get(child(testResultsRef, word)).then(resultSnapshot => {
+              const resultData = resultSnapshot.val() || { totalTests: 0, lastTested: null };
+              return { word, ...resultData };
+            });
+          })).then(wordData => {
+            const testedWords = wordData.filter(w => w.totalTests > 0).length;
+            const notTestedWords = wordData.length - testedWords;
+            const lastTested = wordData.reduce((latest, w) => {
+              if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
+                return w.lastTested;
+              }
+              return latest;
+            }, null);
+            return {
+              index: index + 1,
+              start: index * 100 + 1,
+              end: index * 100 + group.length,
+              testedWords,
+              notTestedWords,
+              lastTested
+            };
+          });
+        })).then(groupData => {
+          displayGroups(groupData);
+        });
       }).catch(error => {
         console.error("Error getting data: ", error);
       });
@@ -30,11 +67,15 @@
 
     function displayGroups(groups) {
       const container = document.getElementById('groups');
-      groups.forEach((group, index) => {
+      groups.forEach(group => {
         const groupDiv = document.createElement('div');
-        groupDiv.innerHTML = `<h2>Group ${index + 1}</h2>
-                              <p>Total Words: ${group.length}</p>
-                              <button onclick="startTest(${index + 1})">Start Test</button>`;
+        groupDiv.className = `group ${group.testedWords > 0 ? 'tested' : 'not-tested'}`;
+        groupDiv.innerHTML = `<h2>Group ${group.index}</h2>
+                              <p>单词序列号区间: ${group.start} - ${group.end}</p>
+                              <p>测试过的单词数: ${group.testedWords}</p>
+                              <p>未测试过的单词数: ${group.notTestedWords}</p>
+                              <p>最后测试时间: ${group.lastTested || 'N/A'}</p>
+                              <button onclick="startTest(${group.index})">Start Test</button>`;
         container.appendChild(groupDiv);
       });
     }
