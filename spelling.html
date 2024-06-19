@@ -3,6 +3,15 @@
 <head>
   <title>Spelling Test</title>
   <style>
+    body {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
+      text-align: center;
+    }
     #result.correct {
       font-size: 20px;
       color: green;
@@ -14,7 +23,7 @@
   </style>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getDatabase, ref, get, set, update, child } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+    import { getDatabase, ref, get, update, child, query, orderByChild } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
     import firebaseConfig from './firebaseConfig.js';
 
     const app = initializeApp(firebaseConfig);
@@ -26,12 +35,21 @@
       const urlParams = new URLSearchParams(window.location.search);
       const groupNumber = urlParams.get('group');
       const wordListRef = ref(database, 'wordlist');
+      const testResultsRef = ref(database, 'testResults');
+
       get(wordListRef).then(snapshot => {
         const allWords = snapshot.val() || [];
         const groupWords = allWords.slice((groupNumber - 1) * 100, groupNumber * 100);
-        words = groupWords.map((word, index) => ({ word, index }));
-        words.sort((a, b) => a.index - b.index);
-        displayWord();
+
+        Promise.all(groupWords.map(word => {
+          return get(child(testResultsRef, word)).then(resultSnapshot => {
+            const resultData = resultSnapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0 };
+            return { word, ...resultData };
+          });
+        })).then(wordData => {
+          words = wordData.sort((a, b) => a.totalTests - b.totalTests || b.incorrectCount - a.incorrectCount || a.index - b.index);
+          displayWord();
+        });
       }).catch(error => {
         console.error("Error getting data: ", error);
       });
@@ -85,6 +103,7 @@
       document.getElementById('spellingInput').value = '';
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
+      document.getElementById('checkButton').innerText = 'Check';
     };
 
     window.addEventListener('keydown', function(event) {
@@ -103,12 +122,13 @@
     window.saveTestResult = function(word, correct, timestamp) {
       const wordRef = child(ref(database, 'testResults'), word);
       get(wordRef).then(snapshot => {
-        const data = snapshot.val() || { correctCount: 0, incorrectCount: 0, lastTested: null };
+        const data = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0 };
         if (correct) {
           data.correctCount++;
         } else {
           data.incorrectCount++;
         }
+        data.totalTests++;
         data.lastTested = timestamp;
         update(wordRef, data);
       }).catch(error => {
