@@ -4,13 +4,13 @@
   <title>Word Input</title>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getDatabase, ref, get, set, push } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+    import { getDatabase, ref, get, set } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
     import firebaseConfig from './firebaseConfig.js';
 
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
 
-    function uploadWords() {
+    window.uploadWords = function() {
       const file = document.getElementById('wordFile').files[0];
       const reader = new FileReader();
 
@@ -40,7 +40,7 @@
       };
 
       reader.readAsText(file);
-    }
+    };
   </script>
 </head>
 <body>
