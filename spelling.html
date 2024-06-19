@@ -48,7 +48,7 @@
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
       document.getElementById('checkButton').innerText = 'Check';
-    }
+    };
 
     window.checkSpelling = function() {
       const input = document.getElementById('spellingInput').value.trim();
@@ -77,9 +77,26 @@
       }
     };
 
+    window.retryWord = function() {
+      const word = words[currentWordIndex].word;
+      const utterance = new SpeechSynthesisUtterance(word);
+      utterance.lang = 'en-US';
+      speechSynthesis.speak(utterance);
+      document.getElementById('spellingInput').value = '';
+      document.getElementById('spellingInput').focus();
+      document.getElementById('result').innerText = '';
+    };
+
     window.addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
-        checkSpelling();
+        const checkButton = document.getElementById('checkButton');
+        if (checkButton.innerText === '下一个') {
+          displayWord();
+        } else if (checkButton.innerText === '重新测试') {
+          retryWord();
+        } else {
+          checkSpelling();
+        }
       }
     });
 
