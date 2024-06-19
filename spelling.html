@@ -35,7 +35,7 @@
       });
     });
 
-    function displayWord() {
+    window.displayWord = function() {
       if (words.length === 0) return;
       const word = words[currentWordIndex].word;
       const utterance = new SpeechSynthesisUtterance(word);
@@ -55,7 +55,7 @@
         resultElement.className = 'correct';
         currentWordIndex++;
         if (currentWordIndex < words.length) {
-          displayWord();
+          setTimeout(displayWord, 500);  // 小延迟以便用户看到正确提示
         } else {
           resultElement.innerText = '测试完成！';
         }
