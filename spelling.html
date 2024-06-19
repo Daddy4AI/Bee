@@ -23,7 +23,7 @@
   </style>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getDatabase, ref, get, update, child, query, orderByChild } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+    import { getDatabase, ref, get, update, child } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
     import firebaseConfig from './firebaseConfig.js';
 
     const app = initializeApp(firebaseConfig);
@@ -65,32 +65,32 @@
       document.getElementById('spellingInput').value = '';
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
-      document.getElementById('checkButton').innerText = 'Check';
+      document.getElementById('playWordButton').innerText = 'Play Word';
     };
 
     window.checkSpelling = function() {
       const input = document.getElementById('spellingInput').value.trim();
       const word = words[currentWordIndex].word;
       const resultElement = document.getElementById('result');
-      const checkButton = document.getElementById('checkButton');
+      const playWordButton = document.getElementById('playWordButton');
       const now = new Date().toISOString();
 
       if (input === word) {
         resultElement.innerText = '正确';
         resultElement.className = 'correct';
-        checkButton.innerText = '下一个';
+        playWordButton.innerText = '下一个';
         saveTestResult(word, true, now);
         currentWordIndex++;
         if (currentWordIndex < words.length) {
           setTimeout(displayWord, 500);
         } else {
           resultElement.innerText = '测试完成！';
-          checkButton.disabled = true;
+          playWordButton.disabled = true;
         }
       } else {
         resultElement.innerHTML = `错误，正确拼写为 <strong>${word}</strong>`;
         resultElement.className = 'incorrect';
-        checkButton.innerText = '重新测试';
+        playWordButton.innerText = '重新测试';
         saveTestResult(word, false, now);
       }
     };
@@ -103,15 +103,15 @@
       document.getElementById('spellingInput').value = '';
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
-      document.getElementById('checkButton').innerText = 'Check';
+      document.getElementById('playWordButton').innerText = 'Check';
     };
 
     window.addEventListener('keydown', function(event) {
       if (event.key === 'Enter') {
-        const checkButton = document.getElementById('checkButton');
-        if (checkButton.innerText === '下一个') {
+        const playWordButton = document.getElementById('playWordButton');
+        if (playWordButton.innerText === '下一个') {
           displayWord();
-        } else if (checkButton.innerText === '重新测试') {
+        } else if (playWordButton.innerText === '重新测试') {
           retryWord();
         } else {
           checkSpelling();
@@ -140,9 +140,8 @@
 <body>
   <h1>Spelling Test</h1>
   <p id="wordNumber"></p>
-  <button onclick="displayWord()">Play Word</button>
+  <button id="playWordButton" onclick="displayWord()">Play Word</button>
   <input type="text" id="spellingInput">
-  <button id="checkButton" onclick="checkSpelling()">Check</button>
   <p id="result"></p>
 </body>
 </html>
