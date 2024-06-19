@@ -11,9 +11,21 @@
       height: 100vh;
       margin: 0;
       text-align: center;
+      font-size: 30px;
+    }
+    #wordNumber, #result {
+      margin: 20px 0;
+    }
+    #spellingInput {
+      font-size: 30px;
+      padding: 10px;
+    }
+    button {
+      font-size: 30px;
+      padding: 10px 20px;
+      margin-top: 20px;
     }
     #result.correct {
-      font-size: 20px;
       color: green;
     }
     #result.incorrect {
@@ -78,7 +90,6 @@
       if (input === word) {
         resultElement.innerText = '正确';
         resultElement.className = 'correct';
-        playWordButton.innerText = '下一个';
         saveTestResult(word, true, now);
         currentWordIndex++;
         if (currentWordIndex < words.length) {
@@ -90,7 +101,7 @@
       } else {
         resultElement.innerHTML = `错误，正确拼写为 <strong>${word}</strong>`;
         resultElement.className = 'incorrect';
-        playWordButton.innerText = '重新测试';
+        playWordButton.innerText = 'Test Again';
         saveTestResult(word, false, now);
       }
     };
@@ -103,7 +114,7 @@
       document.getElementById('spellingInput').value = '';
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
-      document.getElementById('playWordButton').innerText = 'Check';
+      document.getElementById('playWordButton').innerText = 'Play Word';
     };
 
     window.addEventListener('keydown', function(event) {
@@ -111,7 +122,7 @@
         const playWordButton = document.getElementById('playWordButton');
         if (playWordButton.innerText === '下一个') {
           displayWord();
-        } else if (playWordButton.innerText === '重新测试') {
+        } else if (playWordButton.innerText === 'Test Again') {
           retryWord();
         } else {
           checkSpelling();
