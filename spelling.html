@@ -128,6 +128,9 @@
         } else {
           data.incorrectCount++;
         }
+        if (isNaN(data.totalTests)) {
+          data.totalTests = 0;
+        }
         data.totalTests++;
         data.lastTested = timestamp;
         update(wordRef, data);
