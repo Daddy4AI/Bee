@@ -1,85 +1,48 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>单词选择页</title>
+  <title>Word Groups</title>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js"></script>
+  <script src="./firebaseConfig.js"></script>
+  <script>
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js";
+    import { getDatabase, ref, get } from "https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js";
+    import firebaseConfig from './firebaseConfig.js';
+
+    const app = initializeApp(firebaseConfig);
+    const database = getDatabase(app);
+
+    document.addEventListener('DOMContentLoaded', function() {
+      const wordListRef = ref(database, 'wordlist');
+      get(wordListRef).then(snapshot => {
+        const words = snapshot.val() || [];
+        const groups = [];
+        for (let i = 0; i < words.length; i += 100) {
+          groups.push(words.slice(i, i + 100));
+        }
+        displayGroups(groups);
+      });
+    });
+
+    function displayGroups(groups) {
+      const container = document.getElementById('groups');
+      groups.forEach((group, index) => {
+        const groupDiv = document.createElement('div');
+        groupDiv.innerHTML = `<h2>Group ${index + 1}</h2>
+                              <p>Total Words: ${group.length}</p>
+                              <button onclick="startTest(${index + 1})">Start Test</button>`;
+        container.appendChild(groupDiv);
+      });
+    }
+
+    function startTest(groupNumber) {
+      window.location.href = `spelling.html?group=${groupNumber}`;
+    }
+  </script>
 </head>
 <body>
-    <h1>选择单词组进行测试</h1>
-    <div id="groups"></div>
-    <div id="history"></div>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBlDcn2xJTWTVftGEOptBOWLFlY4LaS-YQ",
-            authDomain: "spellingbee-935f5.firebaseapp.com",
-            projectId: "spellingbee-935f5",
-            storageBucket: "spellingbee-935f5.appspot.com",
-            messagingSenderId: "1037070024462",
-            appId: "1:1037070024462:web:59fad718924cc57371a15f"
-        };
-        const app = firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore(app);
-
-        function loadGroups() {
-            db.collection('words').get().then(snapshot => {
-                const words = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const groups = [];
-                for (let i = 0; i < words.length; i += 150) {
-                    groups.push(words.slice(i, i + 150));
-                }
-                displayGroups(groups);
-            });
-        }
-
-        function displayGroups(groups) {
-            const groupsDiv = document.getElementById('groups');
-            groups.forEach((group, index) => {
-                const groupDiv = document.createElement('div');
-                groupDiv.innerHTML = `
-                    <h2>第${index + 1}组</h2>
-                    <p>单词总数: ${group.length}</p>
-                    <p>已测试单词数量: ${group.filter(word => word.tested > 0).length}</p>
-                    <p>未测试单词数量: ${group.filter(word => word.tested === 0).length}</p>
-                    <p>上一次测试时间: ${group.map(word => word.lastTested).sort((a, b) => b - a)[0] || '无'}</p>
-                    <button onclick="startTest(${index})">开始测试</button>
-                `;
-                groupsDiv.appendChild(groupDiv);
-            });
-        }
-
-        function loadHistory() {
-            db.collection('words').get().then(snapshot => {
-                const words = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                const neverTested = words.filter(word => word.tested === 0);
-                const errorsMoreThanOnce = words.filter(word => word.errors > 1);
-                const errorsMoreThanThree = words.filter(word => word.errors > 3);
-
-                displayHistory('从未测试单词', neverTested);
-                displayHistory('测试单词错误次数超过1次', errorsMoreThanOnce);
-                displayHistory('测试单词错误次数超过3次', errorsMoreThanThree);
-            });
-        }
-
-        function displayHistory(title, words) {
-            const historyDiv = document.getElementById('history');
-            const sectionDiv = document.createElement('div');
-            sectionDiv.innerHTML = `<h2>${title}</h2><p>单词数量: ${words.length}</p><button onclick="startTestHistory('${title}')">开始测试</button>`;
-            historyDiv.appendChild(sectionDiv);
-        }
-
-        function startTest(groupIndex) {
-            localStorage.setItem('currentGroup', groupIndex);
-            window.location.href = 'spelling.html';
-        }
-
-        function startTestHistory(title) {
-            localStorage.setItem('currentHistory', title);
-            window.location.href = 'spelling.html';
-        }
-
-        loadGroups();
-        loadHistory();
-    </script>
+  <h1>Word Groups</h1>
+  <div id="groups"></div>
 </body>
 </html>
