@@ -20,8 +20,21 @@
         get(wordListRef).then(snapshot => {
           const data = snapshot.val() || [];
           const updatedData = [...data, ...words];
-          set(wordListRef, updatedData).then(() => {
-            document.getElementById('status').innerText = 'Words uploaded successfully';
+          const totalWords = updatedData.length;
+
+          const progressBar = document.getElementById('progressBar');
+          progressBar.max = words.length;
+
+          words.forEach((word, index) => {
+            setTimeout(() => {
+              data.push(word);
+              set(wordListRef, data).then(() => {
+                progressBar.value = index + 1;
+                if (index + 1 === words.length) {
+                  document.getElementById('status').innerText = 'Words uploaded successfully';
+                }
+              });
+            }, 100 * index);
           });
         });
       };
@@ -34,6 +47,7 @@
   <h1>Upload Word List</h1>
   <input type="file" id="wordFile" accept=".txt">
   <button onclick="uploadWords()">Upload</button>
+  <progress id="progressBar" value="0" max="100"></progress>
   <p id="status"></p>
 </body>
 </html>
