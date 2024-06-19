@@ -3,10 +3,17 @@
 <head>
   <title>Word Groups</title>
   <style>
+    .groups-container {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-around;
+    }
     .group {
       border: 2px solid;
       padding: 20px;
       margin: 10px;
+      flex: 1 1 30%;
+      box-sizing: border-box;
     }
     .tested {
       border-color: lightblue;
@@ -48,13 +55,14 @@
               }
               return latest;
             }, null);
+            const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
             return {
               index: index + 1,
               start: index * 100 + 1,
               end: index * 100 + group.length,
               testedWords,
               notTestedWords,
-              lastTested
+              lastTested: lastTestedFormatted
             };
           });
         })).then(groupData => {
@@ -74,7 +82,7 @@
                               <p>单词序列号区间: ${group.start} - ${group.end}</p>
                               <p>测试过的单词数: ${group.testedWords}</p>
                               <p>未测试过的单词数: ${group.notTestedWords}</p>
-                              <p>最后测试时间: ${group.lastTested || 'N/A'}</p>
+                              <p>最后测试时间: ${group.lastTested}</p>
                               <button onclick="startTest(${group.index})">Start Test</button>`;
         container.appendChild(groupDiv);
       });
@@ -87,6 +95,6 @@
 </head>
 <body>
   <h1>Word Groups</h1>
-  <div id="groups"></div>
+  <div id="groups" class="groups-container"></div>
 </body>
 </html>

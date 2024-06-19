@@ -13,7 +13,7 @@
       text-align: center;
       font-size: 30px;
     }
-    #wordNumber, #groupStats, #result {
+    #wordNumber, #groupStats, #result, #todayStats {
       margin: 20px 0;
     }
     #spellingInput {
@@ -43,6 +43,7 @@
     const database = getDatabase(app);
     let currentWordIndex = 0;
     let words = [];
+    let todayTestedCount = 0;
 
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -70,10 +71,12 @@
             return latest;
           }, null);
 
+          const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
+
           document.getElementById('groupStats').innerHTML = `
             <p>测试过的单词数: ${testedWords}</p>
             <p>未测试过的单词数: ${notTestedWords}</p>
-            <p>最后测试时间: ${lastTested || 'N/A'}</p>
+            <p>最后测试时间: ${lastTestedFormatted}</p>
           `;
 
           displayWord();
@@ -89,11 +92,12 @@
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
       speechSynthesis.speak(utterance);
-      document.getElementById('wordNumber').innerText = `Word ${currentWordIndex + 1} of ${words.length}`;
+      document.getElementById('wordNumber').innerText = `单词序列号: ${currentWordIndex + 1}`;
       document.getElementById('spellingInput').value = '';
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
       document.getElementById('playWordButton').innerText = 'Play Word';
+      document.getElementById('todayStats').innerText = `今天测试的单词数: ${todayTestedCount}`;
     };
 
     window.checkSpelling = function() {
@@ -108,6 +112,7 @@
         resultElement.className = 'correct';
         saveTestResult(words[currentWordIndex].word, true, now);
         currentWordIndex++;
+        todayTestedCount++;
         if (currentWordIndex < words.length) {
           setTimeout(displayWord, 500);
         } else {
@@ -120,6 +125,7 @@
         playWordButton.innerText = 'Test Again';
         saveTestResult(words[currentWordIndex].word, false, now);
       }
+      document.getElementById('todayStats').innerText = `今天测试的单词数: ${todayTestedCount}`;
     };
 
     window.retryWord = function() {
@@ -174,5 +180,6 @@
   <button id="playWordButton" onclick="displayWord()">Play Word</button>
   <input type="text" id="spellingInput">
   <p id="result"></p>
+  <p id="todayStats"></p>
 </body>
 </html>
