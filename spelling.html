@@ -13,7 +13,11 @@
       text-align: center;
       font-size: 30px;
     }
-    #wordNumber, #groupStats, #result, #todayStats {
+    #groupStats, #todayStats {
+      font-size: 15px;
+      margin: 3px 0;
+    }
+    #wordNumber, #result {
       margin: 20px 0;
     }
     #spellingInput {
@@ -50,6 +54,7 @@
       const groupNumber = urlParams.get('group');
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
+      const todayDate = new Date().toISOString().split('T')[0]; // Today's date in YYYY-MM-DD format
 
       get(wordListRef).then(snapshot => {
         const allWords = snapshot.val() || [];
@@ -70,6 +75,8 @@
             }
             return latest;
           }, null);
+
+          todayTestedCount = words.filter(w => w.lastTested && w.lastTested.startsWith(todayDate)).length;
 
           const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
 
@@ -92,7 +99,7 @@
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
       speechSynthesis.speak(utterance);
-      document.getElementById('wordNumber').innerText = `单词序列号: ${currentWordIndex + 1}`;
+      document.getElementById('wordNumber').innerText = `单词序列号: ${currentWordIndex + 1} out of ${words.length}`;
       document.getElementById('spellingInput').value = '';
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
@@ -106,6 +113,7 @@
       const resultElement = document.getElementById('result');
       const playWordButton = document.getElementById('playWordButton');
       const now = new Date().toISOString();
+      const todayDate = now.split('T')[0];
 
       if (input === word) {
         resultElement.innerText = '正确';
@@ -166,7 +174,12 @@
         }
         data.totalTests++;
         data.lastTested = timestamp;
-        update(wordRef, data);
+        update(wordRef, data).then(() => {
+          if (timestamp.startsWith(new Date().toISOString().split('T')[0])) {
+            todayTestedCount++;
+            document.getElementById('todayStats').innerText = `今天测试的单词数: ${todayTestedCount}`;
+          }
+        });
       }).catch(error => {
         console.error("Error updating test result: ", error);
       });
