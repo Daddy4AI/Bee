@@ -3,10 +3,16 @@
 <head>
   <title>Word Groups</title>
   <style>
+    body {
+      background: url('pics/backgd05.jpg') no-repeat center center fixed;
+      background-size: cover;
+      font-family: Arial, sans-serif;
+    }
     .groups-container {
       display: flex;
       flex-wrap: wrap;
       justify-content: space-around;
+      margin-top: 20px;
     }
     .group {
       border: 2px solid;
@@ -14,12 +20,25 @@
       margin: 10px;
       flex: 1 1 30%;
       box-sizing: border-box;
+      background-color: rgba(255, 255, 255, 0.8);
     }
     .tested {
       border-color: lightblue;
     }
     .not-tested {
       border-color: lightgreen;
+    }
+    h1 {
+      text-align: center;
+      margin-top: 20px;
+      color: #333;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    button {
+      font-size: 16px;
+      padding: 10px;
     }
   </style>
   <script type="module">
@@ -37,11 +56,48 @@
       get(wordListRef).then(snapshot => {
         const words = snapshot.val() || [];
         const groups = [];
+        const reviewGroup = [];
         for (let i = 0; i < words.length; i += 100) {
           groups.push(words.slice(i, i + 100));
         }
-        Promise.all(groups.map((group, index) => {
-          return Promise.all(group.map(word => {
+        Promise.all(words.map(word => {
+          return get(child(testResultsRef, word)).then(resultSnapshot => {
+            const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0, lastTested: null };
+            if (resultData.incorrectCount > 0) {
+              reviewGroup.push(word);
+            }
+            return { word, ...resultData };
+          });
+        })).then(() => {
+          const groupDataPromises = groups.map((group, index) => {
+            return Promise.all(group.map(word => {
+              return get(child(testResultsRef, word)).then(resultSnapshot => {
+                const resultData = resultSnapshot.val() || { totalTests: 0, lastTested: null };
+                return { word, ...resultData };
+              });
+            })).then(wordData => {
+              const testedWords = wordData.filter(w => w.totalTests > 0).length;
+              const notTestedWords = wordData.length - testedWords;
+              const lastTested = wordData.reduce((latest, w) => {
+                if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
+                  return w.lastTested;
+                }
+                return latest;
+              }, null);
+              const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
+              return {
+                index: index + 1,
+                start: index * 100 + 1,
+                end: index * 100 + group.length,
+                testedWords,
+                notTestedWords,
+                lastTested: lastTestedFormatted
+              };
+            });
+          });
+
+          // Add Group Review data
+          const reviewGroupDataPromise = Promise.all(reviewGroup.map(word => {
             return get(child(testResultsRef, word)).then(resultSnapshot => {
               const resultData = resultSnapshot.val() || { totalTests: 0, lastTested: null };
               return { word, ...resultData };
@@ -57,15 +113,18 @@
             }, null);
             const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
             return {
-              index: index + 1,
-              start: index * 100 + 1,
-              end: index * 100 + group.length,
+              index: 'Review',
+              start: 1,
+              end: reviewGroup.length,
               testedWords,
               notTestedWords,
               lastTested: lastTestedFormatted
             };
           });
-        })).then(groupData => {
+
+          groupDataPromises.unshift(reviewGroupDataPromise);
+          return Promise.all(groupDataPromises);
+        }).then(groupData => {
           displayGroups(groupData);
         });
       }).catch(error => {
