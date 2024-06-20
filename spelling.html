@@ -46,10 +46,21 @@
       color: red;
       font-weight: bold;
     }
+    #msgBox {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background-color: white;
+      padding: 20px;
+      border: 2px solid black;
+      z-index: 1000;
+    }
   </style>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getDatabase, ref, get, update, child } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+    import { getDatabase, ref, get, update, set, child } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
     import firebaseConfig from './firebaseConfig.js';
 
     const app = initializeApp(firebaseConfig);
@@ -71,49 +82,52 @@
         let groupWords;
 
         if (groupNumber === 'Review') {
-          groupWords = allWords.filter(word => {
-            const resultData = get(child(testResultsRef, word)).then(resultSnapshot => resultSnapshot.val());
-            return resultData && resultData.incorrectCount > 0;
+          get(ref(database, 'wordreview')).then(reviewSnapshot => {
+            groupWords = reviewSnapshot.val() || [];
+            loadWords(groupWords, testResultsRef, todayDate);
           });
         } else {
           groupWords = allWords.slice((groupNumber - 1) * 100, groupNumber * 100);
+          loadWords(groupWords, testResultsRef, todayDate);
         }
-
-        Promise.all(groupWords.map((word, index) => {
-          return get(child(testResultsRef, word)).then(resultSnapshot => {
-            const resultData = resultSnapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0, lastTested: null };
-            if (resultData.lastTested && resultData.lastTested.startsWith(todayDate)) {
-              testedWordsToday.add(word);
-            }
-            return { word, index, ...resultData };
-          });
-        })).then(wordData => {
-          words = wordData.sort((a, b) => a.totalTests - b.totalTests || b.incorrectCount - a.incorrectCount || a.index - b.index);
-          const testedWords = words.filter(w => w.totalTests > 0).length;
-          const notTestedWords = words.length - testedWords;
-          const lastTested = words.reduce((latest, w) => {
-            if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
-              return w.lastTested;
-            }
-            return latest;
-          }, null);
-
-          todayTestedCount = testedWordsToday.size;
-
-          const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
-
-          document.getElementById('groupStats').innerHTML = `
-            <p>测试过的单词数: ${testedWords}</p>
-            <p>未测试过的单词数: ${notTestedWords}</p>
-            <p>最后测试时间: ${lastTestedFormatted}</p>
-          `;
-
-          displayWord();
-        });
       }).catch(error => {
         console.error("Error getting data: ", error);
       });
     });
+
+    function loadWords(groupWords, testResultsRef, todayDate) {
+      Promise.all(groupWords.map((word, index) => {
+        return get(child(testResultsRef, word)).then(resultSnapshot => {
+          const resultData = resultSnapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0, lastTested: null };
+          if (resultData.lastTested && resultData.lastTested.startsWith(todayDate)) {
+            testedWordsToday.add(word);
+          }
+          return { word, index, ...resultData };
+        });
+      })).then(wordData => {
+        words = wordData.sort((a, b) => a.totalTests - b.totalTests || b.incorrectCount - a.incorrectCount || a.index - b.index);
+        const testedWords = words.filter(w => w.totalTests > 0).length;
+        const notTestedWords = words.length - testedWords;
+        const lastTested = words.reduce((latest, w) => {
+          if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
+            return w.lastTested;
+          }
+          return latest;
+        }, null);
+
+        todayTestedCount = testedWordsToday.size;
+
+        const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
+
+        document.getElementById('groupStats').innerHTML = `
+          <p>测试过的单词数: ${testedWords}</p>
+          <p>未测试过的单词数: ${notTestedWords}</p>
+          <p>最后测试时间: ${lastTestedFormatted}</p>
+        `;
+
+        displayWord();
+      });
+    }
 
     window.displayWord = function() {
       if (words.length === 0) return;
@@ -150,8 +164,8 @@
         if (currentWordIndex < words.length) {
           setTimeout(displayWord, 500);
         } else {
-          resultElement.innerText = '测试完成！';
-          playWordButton.disabled = true;
+          showCompletionMessage();
+          saveIncorrectWords();
         }
       } else {
         resultElement.innerHTML = `错误，正确拼写为 <strong>${words[currentWordIndex].word}</strong>`;
@@ -191,6 +205,17 @@
         <p>未测试过的单词数: ${notTestedWords}</p>
         <p>最后测试时间: ${lastTestedFormatted}</p>
       `;
+    };
+
+    window.showCompletionMessage = function() {
+      const msgBox = document.getElementById('msgBox');
+      msgBox.style.display = 'block';
+    };
+
+    window.saveIncorrectWords = function() {
+      const incorrectWords = words.filter(w => w.incorrectCount > 0).map(w => w.word);
+      const wordReviewRef = ref(database, 'wordreview');
+      set(wordReviewRef, incorrectWords);
     };
 
     window.addEventListener('keydown', function(event) {
@@ -240,5 +265,9 @@
   <input type="text" id="spellingInput" autocomplete="off" autocorrect="off" spellcheck="false">
   <p id="result"></p>
   <p id="todayStats"></p>
+  <div id="msgBox">
+    <p>恭喜你完成本组的所有单词的首次测试！</p>
+    <button onclick="window.location.href='index.html'">返回首页</button>
+  </div>
 </body>
 </html>

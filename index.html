@@ -52,52 +52,16 @@
     document.addEventListener('DOMContentLoaded', function() {
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
+      const wordReviewRef = ref(database, 'wordreview');
 
       get(wordListRef).then(snapshot => {
         const words = snapshot.val() || [];
         const groups = [];
-        const reviewGroup = [];
         for (let i = 0; i < words.length; i += 100) {
           groups.push(words.slice(i, i + 100));
         }
-        Promise.all(words.map(word => {
-          return get(child(testResultsRef, word)).then(resultSnapshot => {
-            const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0, lastTested: null };
-            if (resultData.incorrectCount > 0) {
-              reviewGroup.push(word);
-            }
-            return { word, ...resultData };
-          });
-        })).then(() => {
-          const groupDataPromises = groups.map((group, index) => {
-            return Promise.all(group.map(word => {
-              return get(child(testResultsRef, word)).then(resultSnapshot => {
-                const resultData = resultSnapshot.val() || { totalTests: 0, lastTested: null };
-                return { word, ...resultData };
-              });
-            })).then(wordData => {
-              const testedWords = wordData.filter(w => w.totalTests > 0).length;
-              const notTestedWords = wordData.length - testedWords;
-              const lastTested = wordData.reduce((latest, w) => {
-                if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
-                  return w.lastTested;
-                }
-                return latest;
-              }, null);
-              const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
-              return {
-                index: index + 1,
-                start: index * 100 + 1,
-                end: index * 100 + group.length,
-                testedWords,
-                notTestedWords,
-                lastTested: lastTestedFormatted
-              };
-            });
-          });
-
-          // Add Group Review data
-          const reviewGroupDataPromise = Promise.all(reviewGroup.map(word => {
+        Promise.all(groups.map((group, index) => {
+          return Promise.all(group.map(word => {
             return get(child(testResultsRef, word)).then(resultSnapshot => {
               const resultData = resultSnapshot.val() || { totalTests: 0, lastTested: null };
               return { word, ...resultData };
@@ -113,19 +77,47 @@
             }, null);
             const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
             return {
-              index: 'Review',
-              start: 1,
-              end: reviewGroup.length,
+              index: index + 1,
+              start: index * 100 + 1,
+              end: index * 100 + group.length,
               testedWords,
               notTestedWords,
               lastTested: lastTestedFormatted
             };
           });
-
-          groupDataPromises.unshift(reviewGroupDataPromise);
-          return Promise.all(groupDataPromises);
-        }).then(groupData => {
+        })).then(groupData => {
           displayGroups(groupData);
+        });
+
+        get(wordReviewRef).then(reviewSnapshot => {
+          const reviewWords = reviewSnapshot.val() || [];
+          if (reviewWords.length > 0) {
+            Promise.all(reviewWords.map(word => {
+              return get(child(testResultsRef, word)).then(resultSnapshot => {
+                const resultData = resultSnapshot.val() || { totalTests: 0, lastTested: null };
+                return { word, ...resultData };
+              });
+            })).then(wordData => {
+              const testedWords = wordData.filter(w => w.totalTests > 0).length;
+              const notTestedWords = wordData.length - testedWords;
+              const lastTested = wordData.reduce((latest, w) => {
+                if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
+                  return w.lastTested;
+                }
+                return latest;
+              }, null);
+              const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
+              const reviewGroupData = {
+                index: 'Review',
+                start: 1,
+                end: reviewWords.length,
+                testedWords,
+                notTestedWords,
+                lastTested: lastTestedFormatted
+              };
+              displayGroupReview(reviewGroupData);
+            });
+          }
         });
       }).catch(error => {
         console.error("Error getting data: ", error);
@@ -142,9 +134,22 @@
                               <p>测试过的单词数: ${group.testedWords}</p>
                               <p>未测试过的单词数: ${group.notTestedWords}</p>
                               <p>最后测试时间: ${group.lastTested}</p>
-                              <button onclick="startTest('${group.index}')">Start Test</button>`;
+                              <button onclick="startTest(${group.index})">Start Test</button>`;
         container.appendChild(groupDiv);
       });
+    }
+
+    function displayGroupReview(reviewGroupData) {
+      const container = document.getElementById('groups');
+      const groupDiv = document.createElement('div');
+      groupDiv.className = `group ${reviewGroupData.testedWords > 0 ? 'tested' : 'not-tested'}`;
+      groupDiv.innerHTML = `<h2>Group Review</h2>
+                            <p>单词序列号区间: ${reviewGroupData.start} - ${reviewGroupData.end}</p>
+                            <p>测试过的单词数: ${reviewGroupData.testedWords}</p>
+                            <p>未测试过的单词数: ${reviewGroupData.notTestedWords}</p>
+                            <p>最后测试时间: ${reviewGroupData.lastTested}</p>
+                            <button onclick="startTest('Review')">Start Test</button>`;
+      container.prepend(groupDiv);
     }
 
     window.startTest = function(groupNumber) {
