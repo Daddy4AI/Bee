@@ -68,7 +68,16 @@
 
       get(wordListRef).then(snapshot => {
         const allWords = snapshot.val() || [];
-        const groupWords = allWords.slice((groupNumber - 1) * 100, groupNumber * 100);
+        let groupWords;
+
+        if (groupNumber === 'Review') {
+          groupWords = allWords.filter(word => {
+            const resultData = get(child(testResultsRef, word)).then(resultSnapshot => resultSnapshot.val());
+            return resultData && resultData.incorrectCount > 0;
+          });
+        } else {
+          groupWords = allWords.slice((groupNumber - 1) * 100, groupNumber * 100);
+        }
 
         Promise.all(groupWords.map((word, index) => {
           return get(child(testResultsRef, word)).then(resultSnapshot => {
@@ -113,7 +122,7 @@
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
       speechSynthesis.speak(utterance);
-      document.getElementById('wordNumber').innerText = `单词序列号: ${wordIndex} out of 100 words`;
+      document.getElementById('wordNumber').innerText = `单词序列号: ${wordIndex} out of ${words.length} words`;
       document.getElementById('spellingInput').value = '';
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';

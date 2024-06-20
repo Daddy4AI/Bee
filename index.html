@@ -142,7 +142,7 @@
                               <p>测试过的单词数: ${group.testedWords}</p>
                               <p>未测试过的单词数: ${group.notTestedWords}</p>
                               <p>最后测试时间: ${group.lastTested}</p>
-                              <button onclick="startTest(${group.index})">Start Test</button>`;
+                              <button onclick="startTest('${group.index}')">Start Test</button>`;
         container.appendChild(groupDiv);
       });
     }
