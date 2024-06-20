@@ -84,43 +84,40 @@
         if (groupNumber === 'Review') {
           get(ref(database, 'wordreview')).then(reviewSnapshot => {
             groupWords = reviewSnapshot.val() || [];
-            loadWords(groupWords, testResultsRef, todayDate);
+            loadWords(groupWords, testResultsRef, todayDate, allWords);
           });
         } else {
           groupWords = allWords.slice((groupNumber - 1) * 100, groupNumber * 100);
-          loadWords(groupWords, testResultsRef, todayDate);
+          loadWords(groupWords, testResultsRef, todayDate, allWords);
         }
       }).catch(error => {
         console.error("Error getting data: ", error);
       });
     });
 
-    function loadWords(groupWords, testResultsRef, todayDate) {
+    function loadWords(groupWords, testResultsRef, todayDate, allWords) {
       Promise.all(groupWords.map((word, index) => {
         return get(child(testResultsRef, word)).then(resultSnapshot => {
           const resultData = resultSnapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0, lastTested: null };
           if (resultData.lastTested && resultData.lastTested.startsWith(todayDate)) {
             testedWordsToday.add(word);
           }
-          return { word, index, ...resultData };
+          const originalIndex = allWords.indexOf(word);
+          return { word, index: originalIndex, ...resultData };
         });
       })).then(wordData => {
         words = wordData.sort((a, b) => {
           if (a.totalTests === 0 && b.totalTests === 0) {
             return a.index - b.index;
-          } else if (a.totalTests === 0) {
-            return -1;
-          } else if (b.totalTests === 0) {
-            return 1;
-          } else if (a.incorrectCount > 0 && b.incorrectCount > 0) {
-            return new Date(a.lastTested) - new Date(b.lastTested);
-          } else if (a.incorrectCount > 0) {
-            return -1;
-          } else if (b.incorrectCount > 0) {
-            return 1;
-          } else {
-            return a.index - b.index;
           }
+          if (a.totalTests === 0) return -1;
+          if (b.totalTests === 0) return 1;
+          if (a.incorrectCount > 0 && b.incorrectCount > 0) {
+            return new Date(a.lastTested) - new Date(b.lastTested);
+          }
+          if (a.incorrectCount > 0) return -1;
+          if (b.incorrectCount > 0) return 1;
+          return new Date(a.lastTested) - new Date(b.lastTested);
         });
 
         const testedWords = words.filter(w => w.totalTests > 0).length;
