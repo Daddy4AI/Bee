@@ -105,7 +105,24 @@
           return { word, index, ...resultData };
         });
       })).then(wordData => {
-        words = wordData.sort((a, b) => a.totalTests - b.totalTests || b.incorrectCount - a.incorrectCount || a.index - b.index);
+        words = wordData.sort((a, b) => {
+          if (a.totalTests === 0 && b.totalTests === 0) {
+            return a.index - b.index;
+          } else if (a.totalTests === 0) {
+            return -1;
+          } else if (b.totalTests === 0) {
+            return 1;
+          } else if (a.incorrectCount > 0 && b.incorrectCount > 0) {
+            return new Date(a.lastTested) - new Date(b.lastTested);
+          } else if (a.incorrectCount > 0) {
+            return -1;
+          } else if (b.incorrectCount > 0) {
+            return 1;
+          } else {
+            return a.index - b.index;
+          }
+        });
+
         const testedWords = words.filter(w => w.totalTests > 0).length;
         const notTestedWords = words.length - testedWords;
         const lastTested = words.reduce((latest, w) => {
