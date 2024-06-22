@@ -76,6 +76,7 @@
       const groupNumber = urlParams.get('group');
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
+      const wordReviewRef = ref(database, 'wordreview');
       const todayDate = new Date().toISOString().split('T')[0]; // Today's date in YYYY-MM-DD format
 
       get(wordListRef).then(snapshot => {
@@ -83,7 +84,7 @@
         let groupWords;
 
         if (groupNumber === 'Review') {
-          get(ref(database, 'wordreview')).then(reviewSnapshot => {
+          get(wordReviewRef).then(reviewSnapshot => {
             groupWords = reviewSnapshot.val() || [];
             loadWords(groupWords, testResultsRef, todayDate, allWords);
           });
@@ -235,7 +236,16 @@
     };
 
     window.addToWordReview = function(word) {
-      incorrectWordsSet.add(word);
+      const wordReviewRef = ref(database, 'wordreview');
+      get(wordReviewRef).then(snapshot => {
+        const currentWords = snapshot.val() || [];
+        if (!currentWords.includes(word)) {
+          currentWords.push(word);
+          set(wordReviewRef, currentWords);
+        }
+      }).catch(error => {
+        console.error("Error adding word to review list: ", error);
+      });
     };
 
     window.addEventListener('keydown', function(event) {
