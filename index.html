@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Word Groups</title>
+  <title>Zoe Vocabulary List</title>
   <style>
     body {
       background: url('pics/backgd05.jpg') no-repeat center center fixed;
@@ -87,7 +87,10 @@
             };
           });
         })).then(groupData => {
-          displayGroups(groupData);
+          groupData.sort((a, b) => a.index - b.index);
+          const completedGroups = groupData.filter(group => group.testedWords === group.totalWords).sort((a, b) => a.index - b.index);
+          const incompleteGroups = groupData.filter(group => group.testedWords !== group.totalWords);
+          displayGroups([...incompleteGroups, ...completedGroups]);
         });
 
         get(wordReviewRef).then(reviewSnapshot => {
@@ -136,6 +139,9 @@
                               <p>正确情况: ${group.correctWords}/${group.testedWords}</p>
                               <p>最后测试时间: ${group.lastTested}</p>
                               <button onclick="startTest(${group.index})">Start Test</button>`;
+        if (group.testedWords === group.totalWords) {
+          groupDiv.innerHTML += `<span style="color: green; font-weight: bold;">已经完成第一次测试！</span>`;
+        }
         container.appendChild(groupDiv);
       });
     }
@@ -158,7 +164,7 @@
   </script>
 </head>
 <body>
-  <h1>Word Groups</h1>
+  <h1>Zoe Vocabulary List</h1>
   <div id="groups" class="groups-container"></div>
 </body>
 </html>

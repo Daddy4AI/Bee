@@ -38,12 +38,29 @@
 
       reader.readAsText(file);
     };
+
+    window.addErrorWordsToReview = function() {
+      const testResultsRef = ref(database, 'testResults');
+      const wordReviewRef = ref(database, 'wordreview');
+      get(testResultsRef).then(snapshot => {
+        const testResults = snapshot.val() || {};
+        const errorWords = Object.keys(testResults).filter(word => testResults[word].incorrectCount > 0);
+        get(wordReviewRef).then(reviewSnapshot => {
+          const currentReviewWords = reviewSnapshot.val() || [];
+          const newReviewWords = [...new Set([...currentReviewWords, ...errorWords])];
+          set(wordReviewRef, newReviewWords).then(() => {
+            document.getElementById('status').innerText = 'Error words added to review list';
+          });
+        });
+      });
+    };
   </script>
 </head>
 <body>
   <h1>Upload Word List</h1>
   <input type="file" id="wordFile" accept=".txt">
   <button onclick="uploadWords()">Upload</button>
+  <button onclick="addErrorWordsToReview()">Add Error Words</button>
   <progress id="progressBar" value="0" max="100"></progress>
   <p id="status"></p>
 </body>
