@@ -70,10 +70,11 @@
     let todayTestedCount = 0;
     const testedWordsToday = new Set();
     const incorrectWordsSet = new Set();
+    let groupNumber = null;
 
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
-      const groupNumber = urlParams.get('group');
+      groupNumber = parseInt(urlParams.get('group'));
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
       const wordReviewRef = ref(database, 'wordreview');
@@ -174,17 +175,22 @@
         resultElement.innerText = '正确';
         resultElement.className = 'correct';
         saveTestResult(words[currentWordIndex].word, true, now);
+
+        // Check if the current word is the last word in the group
+        const wordIndex = words[currentWordIndex].index + 1;
+        if ((wordIndex - (groupNumber - 1) * 100) === words.length) {
+          showCompletionMessage();
+        }
+
         currentWordIndex++;
         if (!testedWordsToday.has(words[currentWordIndex].word)) {
           todayTestedCount++;
           testedWordsToday.add(words[currentWordIndex].word);
         }
 
-        // Check if the current word is the last word in the group
         if (currentWordIndex < words.length) {
           setTimeout(displayWord, 500);
         } else {
-          showCompletionMessage();
           saveIncorrectWords();
         }
       } else {
