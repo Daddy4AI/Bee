@@ -158,6 +158,7 @@
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
       document.getElementById('playWordButton').innerText = 'Play Word';
+      document.getElementById('wordIndexDisplay').innerText = ` (${currentWordIndex + 1}/${words.length})`;
       document.getElementById('todayStats').innerText = `今天测试的单词数: ${todayTestedCount}`;
     };
 
@@ -179,7 +180,7 @@
           testedWordsToday.add(words[currentWordIndex].word);
         }
 
-        // Highlighted: Check if the current word is the last word in the group
+        // Check if the current word is the last word in the group
         if (currentWordIndex < words.length) {
           setTimeout(displayWord, 500);
         } else {
@@ -298,6 +299,7 @@
   <div id="groupStats"></div>
   <p id="wordNumber"></p>
   <button id="playWordButton" onclick="displayWord()">Play Word</button>
+  <span id="wordIndexDisplay"></span>
   <input type="text" id="spellingInput" autocomplete="off" autocorrect="off" spellcheck="false">
   <p id="result"></p>
   <p id="todayStats"></p>
