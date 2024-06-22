@@ -18,7 +18,7 @@
       border: 2px solid;
       padding: 20px;
       margin: 10px;
-      flex: 1 1 30%;
+      flex: 1 1 21%; /* Adjusted to fit 4 groups in a row */
       box-sizing: border-box;
       background-color: rgba(255, 255, 255, 0.8);
     }
@@ -68,21 +68,21 @@
             });
           })).then(wordData => {
             const testedWords = wordData.filter(w => w.totalTests > 0).length;
-            const correctWords = wordData.filter(w => w.totalTests > 0 && w.incorrectCount === 0).length;
+            const incorrectWords = wordData.filter(w => w.incorrectCount > 0).length;
             const lastTested = wordData.reduce((latest, w) => {
               if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
                 return w.lastTested;
               }
               return latest;
             }, null);
-            const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
+            const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : 'N/A';
             return {
               index: index + 1,
               start: index * 100 + 1,
               end: index * 100 + group.length,
               testedWords,
               totalWords: group.length,
-              correctWords,
+              incorrectWords,
               lastTested: lastTestedFormatted
             };
           });
@@ -103,21 +103,21 @@
               });
             })).then(wordData => {
               const testedWords = wordData.filter(w => w.totalTests > 0).length;
-              const correctWords = wordData.filter(w => w.totalTests > 0 && w.incorrectCount === 0).length;
+              const incorrectWords = wordData.filter(w => w.incorrectCount > 0).length;
               const lastTested = wordData.reduce((latest, w) => {
                 if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
                   return w.lastTested;
                 }
                 return latest;
               }, null);
-              const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
+              const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : 'N/A';
               const reviewGroupData = {
                 index: 'Review',
                 start: 1,
                 end: reviewWords.length,
                 testedWords,
                 totalWords: reviewWords.length,
-                correctWords,
+                incorrectWords,
                 lastTested: lastTestedFormatted
               };
               displayGroupReview(reviewGroupData);
@@ -136,8 +136,8 @@
         groupDiv.className = `group ${group.testedWords > 0 ? 'tested' : 'not-tested'}`;
         groupDiv.innerHTML = `<h2>Group ${group.index}</h2>
                               <p>测试进程: ${group.testedWords}/${group.totalWords}</p>
-                              <p>正确情况: ${group.correctWords}/${group.testedWords}</p>
-                              <p>最后测试时间: ${group.lastTested}</p>
+                              <p>错误情况: ${group.incorrectWords}/${group.testedWords}</p>
+                              <p>测试时间: ${group.lastTested}</p>
                               <button onclick="startTest(${group.index})">Start Test</button>`;
         if (group.testedWords === group.totalWords) {
           groupDiv.innerHTML += `<span style="color: green; font-weight: bold;">已经完成第一次测试！</span>`;
@@ -152,8 +152,8 @@
       groupDiv.className = `group ${reviewGroupData.testedWords > 0 ? 'tested' : 'not-tested'}`;
       groupDiv.innerHTML = `<h2>Group Review</h2>
                             <p>测试进程: ${reviewGroupData.testedWords}/${reviewGroupData.totalWords}</p>
-                            <p>正确情况: ${reviewGroupData.correctWords}/${reviewGroupData.testedWords}</p>
-                            <p>最后测试时间: ${reviewGroupData.lastTested}</p>
+                            <p>错误情况: ${reviewGroupData.incorrectWords}/${reviewGroupData.testedWords}</p>
+                            <p>测试时间: ${reviewGroupData.lastTested}</p>
                             <button onclick="startTest('Review')">Start Test</button>`;
       container.prepend(groupDiv);
     }
