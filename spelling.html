@@ -82,9 +82,16 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
-      groupNumber = parseInt(urlParams.get('group'));
-      document.title = `Spelling Test - Group ${groupNumber}`;
-      document.getElementById('groupNumber').innerText = groupNumber;
+      const group = urlParams.get('group');
+      if (group === 'Review') {
+        groupNumber = 'Review';
+        document.title = `Spelling Test - Group Review`;
+        document.getElementById('groupNumber').innerText = 'Review';
+      } else {
+        groupNumber = parseInt(group);
+        document.title = `Spelling Test - Group ${groupNumber}`;
+        document.getElementById('groupNumber').innerText = groupNumber;
+      }
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
       const wordReviewRef = ref(database, 'wordreview');
@@ -155,7 +162,7 @@
       if (words.length === 0) return;
       const word = words[currentWordIndex].word;
       const wordIndex = words[currentWordIndex].index + 1;
-      const groupRelativeIndex = wordIndex - (groupNumber - 1) * 100;
+      const groupRelativeIndex = groupNumber === 'Review' ? wordIndex : wordIndex - (groupNumber - 1) * 100;
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
       utterance.rate = 0.8; // Slow down the speech rate
@@ -182,7 +189,8 @@
 
         // Check if the current word is the last word in the group
         const wordIndex = words[currentWordIndex].index + 1;
-        if ((wordIndex - (groupNumber - 1) * 100) === words.length) {
+        const groupRelativeIndex = groupNumber === 'Review' ? wordIndex : wordIndex - (groupNumber - 1) * 100;
+        if (groupRelativeIndex === words.length) {
           showCompletionMessage();
         }
 
@@ -204,7 +212,6 @@
         saveTestResult(words[currentWordIndex].word, false, now);
         addToWordReview(words[currentWordIndex].word);
       }
-      document.getElementById('todayStats').innerText = `今天测试的单词数: ${todayTestedCount}`;
       const testedWords = words.filter(w => w.totalTests > 0).length;
       const notTestedWords = words.length - testedWords;
       const lastTested = words.reduce((latest, w) => {
@@ -294,7 +301,6 @@
         update(wordRef, data).then(() => {
           if (timestamp.startsWith(new Date().toISOString().split('T')[0])) {
             testedWordsToday.add(word);
-            document.getElementById('todayStats').innerText = `今天测试的单词数: ${testedWordsToday.size}`;
           }
         });
       }).catch(error => {
