@@ -178,6 +178,8 @@
           todayTestedCount++;
           testedWordsToday.add(words[currentWordIndex].word);
         }
+
+        // Highlighted: Check if the current word is the last word in the group
         if (currentWordIndex < words.length) {
           setTimeout(displayWord, 500);
         } else {
