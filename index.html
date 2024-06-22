@@ -63,12 +63,12 @@
         Promise.all(groups.map((group, index) => {
           return Promise.all(group.map(word => {
             return get(child(testResultsRef, word)).then(resultSnapshot => {
-              const resultData = resultSnapshot.val() || { totalTests: 0, lastTested: null };
+              const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
               return { word, ...resultData };
             });
           })).then(wordData => {
             const testedWords = wordData.filter(w => w.totalTests > 0).length;
-            const notTestedWords = wordData.length - testedWords;
+            const correctWords = wordData.filter(w => w.totalTests > 0 && w.incorrectCount === 0).length;
             const lastTested = wordData.reduce((latest, w) => {
               if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
                 return w.lastTested;
@@ -81,7 +81,8 @@
               start: index * 100 + 1,
               end: index * 100 + group.length,
               testedWords,
-              notTestedWords,
+              totalWords: group.length,
+              correctWords,
               lastTested: lastTestedFormatted
             };
           });
@@ -94,12 +95,12 @@
           if (reviewWords.length > 0) {
             Promise.all(reviewWords.map(word => {
               return get(child(testResultsRef, word)).then(resultSnapshot => {
-                const resultData = resultSnapshot.val() || { totalTests: 0, lastTested: null };
+                const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
                 return { word, ...resultData };
               });
             })).then(wordData => {
               const testedWords = wordData.filter(w => w.totalTests > 0).length;
-              const notTestedWords = wordData.length - testedWords;
+              const correctWords = wordData.filter(w => w.totalTests > 0 && w.incorrectCount === 0).length;
               const lastTested = wordData.reduce((latest, w) => {
                 if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
                   return w.lastTested;
@@ -112,7 +113,8 @@
                 start: 1,
                 end: reviewWords.length,
                 testedWords,
-                notTestedWords,
+                totalWords: reviewWords.length,
+                correctWords,
                 lastTested: lastTestedFormatted
               };
               displayGroupReview(reviewGroupData);
@@ -130,9 +132,8 @@
         const groupDiv = document.createElement('div');
         groupDiv.className = `group ${group.testedWords > 0 ? 'tested' : 'not-tested'}`;
         groupDiv.innerHTML = `<h2>Group ${group.index}</h2>
-                              <p>单词序列号区间: ${group.start} - ${group.end}</p>
-                              <p>测试过的单词数: ${group.testedWords}</p>
-                              <p>未测试过的单词数: ${group.notTestedWords}</p>
+                              <p>测试进程: ${group.testedWords}/${group.totalWords}</p>
+                              <p>正确情况: ${group.correctWords}/${group.testedWords}</p>
                               <p>最后测试时间: ${group.lastTested}</p>
                               <button onclick="startTest(${group.index})">Start Test</button>`;
         container.appendChild(groupDiv);
@@ -144,9 +145,8 @@
       const groupDiv = document.createElement('div');
       groupDiv.className = `group ${reviewGroupData.testedWords > 0 ? 'tested' : 'not-tested'}`;
       groupDiv.innerHTML = `<h2>Group Review</h2>
-                            <p>单词序列号区间: ${reviewGroupData.start} - ${reviewGroupData.end}</p>
-                            <p>测试过的单词数: ${reviewGroupData.testedWords}</p>
-                            <p>未测试过的单词数: ${reviewGroupData.notTestedWords}</p>
+                            <p>测试进程: ${reviewGroupData.testedWords}/${reviewGroupData.totalWords}</p>
+                            <p>正确情况: ${reviewGroupData.correctWords}/${reviewGroupData.testedWords}</p>
                             <p>最后测试时间: ${reviewGroupData.lastTested}</p>
                             <button onclick="startTest('Review')">Start Test</button>`;
       container.prepend(groupDiv);

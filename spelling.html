@@ -69,6 +69,7 @@
     let words = [];
     let todayTestedCount = 0;
     const testedWordsToday = new Set();
+    const incorrectWordsSet = new Set();
 
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -186,6 +187,7 @@
         resultElement.className = 'incorrect';
         playWordButton.innerText = 'Test Again';
         saveTestResult(words[currentWordIndex].word, false, now);
+        addToWordReview(words[currentWordIndex].word);
       }
       document.getElementById('todayStats').innerText = `今天测试的单词数: ${todayTestedCount}`;
       updateGroupStats();
@@ -227,9 +229,13 @@
     };
 
     window.saveIncorrectWords = function() {
-      const incorrectWords = words.filter(w => w.incorrectCount > 0).map(w => w.word);
+      const incorrectWords = Array.from(incorrectWordsSet);
       const wordReviewRef = ref(database, 'wordreview');
       set(wordReviewRef, incorrectWords);
+    };
+
+    window.addToWordReview = function(word) {
+      incorrectWordsSet.add(word);
     };
 
     window.addEventListener('keydown', function(event) {
