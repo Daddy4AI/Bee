@@ -47,6 +47,10 @@
       margin-top: 20px;
       white-space: pre-line;
     }
+    #groupStats {
+      font-size: 20px;
+      margin-top: 20px;
+    }
     #msgBox {
       display: none;
       position: absolute;
@@ -191,7 +195,7 @@
           saveIncorrectWords();
         }
       } else {
-        resultElement.innerHTML = `错误，正确的拼写为 <strong>${words[currentWordIndex].word}</strong>\n<a href="https://www.merriam-webster.com/dictionary/${words[currentWordIndex].word}" target="_blank">Merriam-Webster</a>`;
+        resultElement.innerHTML = `错误，正确的拼写为 <strong>${words[currentWordIndex].word}</strong>\n<a href="https://www.merriam-webster.com/dictionary/${words[currentWordIndex].word}" target="_blank">查询本单词</a>`;
         resultElement.className = 'incorrect';
         playWordButton.innerText = 'Test Again';
         saveTestResult(words[currentWordIndex].word, false, now);
@@ -226,7 +230,6 @@
       document.getElementById('groupStats').innerHTML = `
         <p>已经测试单词数: ${testedWords}</p>
         <p>还没测试单词数: ${notTestedWords}</p>
-        <p>今天测试单词数: ${todayTestedCount}</p>
         <p>最后测试时间: ${lastTestedFormatted}</p>
       `;
     };
@@ -297,13 +300,12 @@
   </script>
 </head>
 <body>
-  <h1>Spelling Test - Group #<span id="groupNumber"></span></h1>
+  <h1>Spelling Test - Group <span id="groupNumber"></span></h1>
   <p id="wordNumber"></p>
   <button id="playWordButton" onclick="displayWord()">Play Word</button>
   <input type="text" id="spellingInput" autocomplete="off" autocorrect="off" spellcheck="false">
   <p id="result"></p>
   <div id="groupStats"></div>
-  <div id="todayStats"></div>
   <div id="msgBox">
     <p>恭喜你完成这组单词的第一次测试！</p>
     <button onclick="window.location.href='index.html'">返回首页</button>
