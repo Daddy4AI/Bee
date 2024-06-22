@@ -57,10 +57,13 @@
       top: 50%;
       left: 50%;
       transform: translate(-50%, -50%);
-      background-color: white;
+      background: url('pics/backgd02.jpg') no-repeat center center;
+      background-size: cover;
       padding: 20px;
       border: 2px solid black;
       z-index: 1000;
+      text-align: center;
+      color: white;
     }
   </style>
   <script type="module">
@@ -81,6 +84,7 @@
       const urlParams = new URLSearchParams(window.location.search);
       groupNumber = parseInt(urlParams.get('group'));
       document.title = `Spelling Test - Group ${groupNumber}`;
+      document.getElementById('groupNumber').innerText = groupNumber;
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
       const wordReviewRef = ref(database, 'wordreview');
@@ -140,7 +144,7 @@
 
         todayTestedCount = testedWordsToday.size;
 
-        const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
+        const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : 'N/A';
 
         updateGroupStats(testedWords, notTestedWords, todayTestedCount, lastTestedFormatted);
         displayWord();
@@ -161,7 +165,6 @@
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
       document.getElementById('playWordButton').innerText = 'Play Word';
-      document.getElementById('todayStats').innerText = `今天测试的单词数: ${todayTestedCount}`;
     };
 
     window.checkSpelling = function() {
@@ -210,7 +213,7 @@
         }
         return latest;
       }, null);
-      const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(',', '') : 'N/A';
+      const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : 'N/A';
       updateGroupStats(testedWords, notTestedWords, todayTestedCount, lastTestedFormatted);
     };
 
@@ -230,6 +233,7 @@
       document.getElementById('groupStats').innerHTML = `
         <p>已经测试单词数: ${testedWords}</p>
         <p>还没测试单词数: ${notTestedWords}</p>
+        <p>今天测试单词数: ${todayTestedCount}</p>
         <p>最后测试时间: ${lastTestedFormatted}</p>
       `;
     };
