@@ -253,7 +253,7 @@
     window.viewWords = function(groupNumber) {
       const wordListModal = document.getElementById('wordListModal');
       const wordListTable = document.getElementById('wordListTable');
-      wordListTable.innerHTML = '<tr><th>序列号</th><th>单词</th><th>Dictionary</th></tr>';
+      wordListTable.innerHTML = '<tr><th>序列号</th><th>单词</th><th>Dictionary</th><th>测试总数</th></tr>';
 
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
@@ -277,7 +277,7 @@
     function populateWordListTable(groupWords, testResultsRef, wordListTable) {
       Promise.all(groupWords.map((word, index) => {
         return get(child(testResultsRef, word)).then(resultSnapshot => {
-          const resultData = resultSnapshot.val() || { incorrectCount: 0 };
+          const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
           return { word, index: index + 1, ...resultData };
         });
       })).then(wordData => {
@@ -286,10 +286,18 @@
           const cell1 = row.insertCell(0);
           const cell2 = row.insertCell(1);
           const cell3 = row.insertCell(2);
+          const cell4 = row.insertCell(3);
           cell1.innerHTML = data.index;
           cell2.innerHTML = data.incorrectCount > 0 ? `<span class="incorrect">${data.word}</span>` : data.word;
           cell3.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">Dictionary</a>`;
+          cell4.innerHTML = data.totalTests;
         });
+
+        const closeRow = wordListTable.insertRow();
+        const closeCell = closeRow.insertCell(0);
+        closeCell.colSpan = 4;
+        closeCell.innerHTML = '<button onclick="closeModal()">Close</button>';
+        closeCell.style.textAlign = 'center';
       });
     }
 
