@@ -18,7 +18,7 @@
       border: 2px solid;
       padding: 20px;
       margin: 10px;
-      flex: 1 1 21%; /* Adjusted to fit 4 groups in a row */
+      flex: 1 1 21%;
       box-sizing: border-box;
       background-color: rgba(255, 255, 255, 0.8);
     }
@@ -39,6 +39,68 @@
     button {
       font-size: 16px;
       padding: 10px;
+    }
+    .progress-bar {
+      width: 100%;
+      background-color: #f3f3f3;
+      border: 1px solid #ccc;
+      height: 20px;
+      margin-top: 5px;
+    }
+    .progress {
+      height: 100%;
+    }
+    .blue {
+      background-color: blue;
+    }
+    .red {
+      background-color: red;
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 1000;
+      left: 50%;
+      top: 50%;
+      width: 50%;
+      height: 50%;
+      overflow: auto;
+      background-color: white;
+      border: 2px solid #888;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+      transform: translate(-50%, -50%);
+      padding: 20px;
+    }
+    .modal-content {
+      margin: 15px 0;
+    }
+    .close {
+      color: #aaa;
+      float: right;
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .close:hover,
+    .close:focus {
+      color: black;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .word-list-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .word-list-table th,
+    .word-list-table td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    .word-list-table th {
+      background-color: #f2f2f2;
+    }
+    .incorrect {
+      color: red;
     }
   </style>
   <script type="module">
@@ -132,13 +194,26 @@
     function displayGroups(groups) {
       const container = document.getElementById('groups');
       groups.forEach(group => {
+        const testedProgress = (group.testedWords / group.totalWords) * 100;
+        const incorrectProgress = group.testedWords > 0 ? (group.incorrectWords / group.testedWords) * 100 : 0;
+        const incorrectBarColor = incorrectProgress > 25 ? 'red' : 'blue';
+
         const groupDiv = document.createElement('div');
         groupDiv.className = `group ${group.testedWords > 0 ? 'tested' : 'not-tested'}`;
-        groupDiv.innerHTML = `<h2>Group ${group.index}</h2>
-                              <p>测试进程: ${group.testedWords}/${group.totalWords}</p>
-                              <p>错误情况: ${group.incorrectWords}/${group.testedWords}</p>
-                              <p>测试时间: ${group.lastTested}</p>
-                              <button onclick="startTest(${group.index})">Start Test</button>`;
+        groupDiv.innerHTML = `
+          <h2>Group ${group.index}</h2>
+          <p>测试进程: ${group.testedWords}/${group.totalWords}</p>
+          <div class="progress-bar">
+            <div class="progress blue" style="width: ${testedProgress}%;"></div>
+          </div>
+          <p>错误情况: ${group.incorrectWords}/${group.testedWords}</p>
+          <div class="progress-bar">
+            <div class="progress ${incorrectBarColor}" style="width: ${incorrectProgress}%;"></div>
+          </div>
+          <p>测试时间: ${group.lastTested}</p>
+          <button onclick="startTest(${group.index})">Start Test</button>
+          <button onclick="viewWords(${group.index})">View Words</button>
+        `;
         if (group.testedWords === group.totalWords) {
           groupDiv.innerHTML += `<span style="color: green; font-weight: bold;">已经完成第一次测试！</span>`;
         }
@@ -148,23 +223,97 @@
 
     function displayGroupReview(reviewGroupData) {
       const container = document.getElementById('groups');
+      const testedProgress = (reviewGroupData.testedWords / reviewGroupData.totalWords) * 100;
+      const incorrectProgress = reviewGroupData.testedWords > 0 ? (reviewGroupData.incorrectWords / reviewGroupData.testedWords) * 100 : 0;
+      const incorrectBarColor = incorrectProgress > 25 ? 'red' : 'blue';
+
       const groupDiv = document.createElement('div');
       groupDiv.className = `group ${reviewGroupData.testedWords > 0 ? 'tested' : 'not-tested'}`;
-      groupDiv.innerHTML = `<h2>Group Review</h2>
-                            <p>测试进程: ${reviewGroupData.testedWords}/${reviewGroupData.totalWords}</p>
-                            <p>错误情况: ${reviewGroupData.incorrectWords}/${reviewGroupData.testedWords}</p>
-                            <p>测试时间: ${reviewGroupData.lastTested}</p>
-                            <button onclick="startTest('Review')">Start Test</button>`;
+      groupDiv.innerHTML = `
+        <h2>Group Review</h2>
+        <p>测试进程: ${reviewGroupData.testedWords}/${reviewGroupData.totalWords}</p>
+        <div class="progress-bar">
+          <div class="progress blue" style="width: ${testedProgress}%;"></div>
+        </div>
+        <p>错误情况: ${reviewGroupData.incorrectWords}/${reviewGroupData.testedWords}</p>
+        <div class="progress-bar">
+          <div class="progress ${incorrectBarColor}" style="width: ${incorrectProgress}%;"></div>
+        </div>
+        <p>测试时间: ${reviewGroupData.lastTested}</p>
+        <button onclick="startTest('Review')">Start Test</button>
+        <button onclick="viewWords('Review')">View Words</button>
+      `;
       container.prepend(groupDiv);
     }
 
     window.startTest = function(groupNumber) {
       window.location.href = `spelling.html?group=${groupNumber}`;
     };
+
+    window.viewWords = function(groupNumber) {
+      const wordListModal = document.getElementById('wordListModal');
+      const wordListTable = document.getElementById('wordListTable');
+      wordListTable.innerHTML = '<tr><th>序列号</th><th>单词</th><th>Dictionary</th></tr>';
+
+      const wordListRef = ref(database, 'wordlist');
+      const testResultsRef = ref(database, 'testResults');
+      get(wordListRef).then(snapshot => {
+        const words = snapshot.val() || [];
+        let groupWords;
+        if (groupNumber === 'Review') {
+          const wordReviewRef = ref(database, 'wordreview');
+          get(wordReviewRef).then(reviewSnapshot => {
+            groupWords = reviewSnapshot.val() || [];
+            populateWordListTable(groupWords, testResultsRef, wordListTable);
+          });
+        } else {
+          groupWords = words.slice((groupNumber - 1) * 100, groupNumber * 100);
+          populateWordListTable(groupWords, testResultsRef, wordListTable);
+        }
+      });
+      wordListModal.style.display = 'block';
+    };
+
+    function populateWordListTable(groupWords, testResultsRef, wordListTable) {
+      Promise.all(groupWords.map((word, index) => {
+        return get(child(testResultsRef, word)).then(resultSnapshot => {
+          const resultData = resultSnapshot.val() || { incorrectCount: 0 };
+          return { word, index: index + 1, ...resultData };
+        });
+      })).then(wordData => {
+        wordData.forEach(data => {
+          const row = wordListTable.insertRow();
+          const cell1 = row.insertCell(0);
+          const cell2 = row.insertCell(1);
+          const cell3 = row.insertCell(2);
+          cell1.innerHTML = data.index;
+          cell2.innerHTML = data.incorrectCount > 0 ? `<span class="incorrect">${data.word}</span>` : data.word;
+          cell3.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">Dictionary</a>`;
+        });
+      });
+    }
+
+    window.closeModal = function() {
+      document.getElementById('wordListModal').style.display = 'none';
+    };
+
+    window.onclick = function(event) {
+      const modal = document.getElementById('wordListModal');
+      if (event.target == modal) {
+        modal.style.display = 'none';
+      }
+    };
   </script>
 </head>
 <body>
   <h1>Zoe Vocabulary List</h1>
   <div id="groups" class="groups-container"></div>
+
+  <div id="wordListModal" class="modal">
+    <span class="close" onclick="closeModal()">&times;</span>
+    <div class="modal-content">
+      <table id="wordListTable" class="word-list-table"></table>
+    </div>
+  </div>
 </body>
 </html>
