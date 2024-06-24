@@ -110,6 +110,7 @@
 
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
+    const testRound = 1;
 
     document.addEventListener('DOMContentLoaded', function() {
       const wordListRef = ref(database, 'wordlist');
@@ -160,7 +161,7 @@
           if (reviewWords.length > 0) {
             Promise.all(reviewWords.map(word => {
               return get(child(testResultsRef, word)).then(resultSnapshot => {
-                const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
+                const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0, correctCount: 0 };
                 return { word, ...resultData };
               });
             })).then(wordData => {
@@ -173,13 +174,17 @@
                 return latest;
               }, null);
               const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : 'N/A';
+              const adjustedTestedWords = Math.max(0, testedWords - testRound);
+              const adjustedIncorrectWords = Math.max(0, incorrectWords - testRound);
+              const adjustedTotalTests = Math.max(0, testedWords * 2 - 2 * testRound);
+
               const reviewGroupData = {
                 index: 'Review',
                 start: 1,
                 end: reviewWords.length,
-                testedWords,
+                testedWords: adjustedTestedWords,
                 totalWords: reviewWords.length,
-                incorrectWords,
+                incorrectWords: adjustedIncorrectWords,
                 lastTested: lastTestedFormatted
               };
               displayGroupReview(reviewGroupData);
