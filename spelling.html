@@ -165,7 +165,7 @@
       const groupRelativeIndex = groupNumber === 'Review' ? wordIndex : wordIndex - (groupNumber - 1) * 100;
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
-      utterance.rate = 0.8; // Slow down the speech rate
+      utterance.rate = 0.6; // Slow down the speech rate
       speechSynthesis.speak(utterance);
       document.getElementById('wordNumber').innerText = `单词序列号: ${groupRelativeIndex} out of ${words.length} words`;
       document.getElementById('spellingInput').value = '';
