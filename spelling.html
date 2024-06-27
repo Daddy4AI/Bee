@@ -77,7 +77,8 @@
     let words = [];
     let todayTestedCount = 0;
     const testedWordsToday = new Set();
-    const incorrectWordsSet = new Set();
+    let retryingWord = false;
+    let incorrectAttempts = 0;
     let groupNumber = null;
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -187,6 +188,18 @@
         resultElement.className = 'correct';
         saveTestResult(words[currentWordIndex].word, true, now);
 
+        if (retryingWord) {
+          retryingWord = false;
+          incorrectAttempts = 0;
+        }
+
+        // Check if the current word is the last word in the group
+        const wordIndex = words[currentWordIndex].index + 1;
+        const groupRelativeIndex = groupNumber === 'Review' ? wordIndex : wordIndex - (groupNumber - 1) * 100;
+        if (groupRelativeIndex === words.length) {
+          showCompletionMessage();
+        }
+
         currentWordIndex++;
         if (!testedWordsToday.has(words[currentWordIndex].word)) {
           todayTestedCount++;
@@ -202,6 +215,8 @@
         resultElement.innerHTML = `错误，正确的拼写为 <strong>${words[currentWordIndex].word}</strong>\n<a href="https://www.merriam-webster.com/dictionary/${words[currentWordIndex].word}" target="_blank">查询本单词</a>`;
         resultElement.className = 'incorrect';
         playWordButton.innerText = 'Test Again';
+        retryingWord = true;
+        incorrectAttempts++;
         saveTestResult(words[currentWordIndex].word, false, now);
       }
       const testedWords = words.filter(w => w.totalTests > 0).length;
@@ -263,21 +278,28 @@
       });
     };
 
+    window.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        const playWordButton = document.getElementById('playWordButton');
+        if (playWordButton.innerText === '下一个') {
+          displayWord();
+        } else if (playWordButton.innerText === 'Test Again') {
+          retryWord();
+        } else {
+          checkSpelling();
+        }
+      }
+    });
+
     window.saveTestResult = function(word, correct, timestamp) {
       const wordRef = child(ref(database, 'testResults'), word);
       get(wordRef).then(snapshot => {
         const data = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0 };
         if (correct) {
-          data.correctCount++;
-          incorrectWordsSet.delete(word);  // Remove word from incorrect set if correct
-          if (data.incorrectCount === 1) { // If it was marked incorrect before, reset the count
-            data.incorrectCount = 0;
-          }
-          currentWordIndex++;
+          data.correctCount = 0;
         } else {
           if (data.incorrectCount === 0) {
             data.incorrectCount = 1;
-            incorrectWordsSet.add(word); // Add word to incorrect set
           }
         }
         if (isNaN(data.totalTests)) {
@@ -294,19 +316,6 @@
         console.error("Error updating test result: ", error);
       });
     };
-
-    window.addEventListener('keydown', function(event) {
-      if (event.key === 'Enter') {
-        const playWordButton = document.getElementById('playWordButton');
-        if (playWordButton.innerText === '下一个') {
-          displayWord();
-        } else if (playWordButton.innerText === 'Test Again') {
-          retryWord();
-        } else {
-          checkSpelling();
-        }
-      }
-    });
   </script>
 </head>
 <body>
