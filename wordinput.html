@@ -4,7 +4,7 @@
   <title>Word Input</title>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getDatabase, ref, get, set } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+    import { getDatabase, ref, get, set, update } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
     import firebaseConfig from './firebaseConfig.js';
 
     const app = initializeApp(firebaseConfig);
@@ -54,14 +54,58 @@
         });
       });
     };
+
+    window.correctTestCounts = function() {
+      const testResultsRef = ref(database, 'testResults');
+      get(testResultsRef).then(snapshot => {
+        const testResults = snapshot.val() || {};
+        const updates = {};
+        Object.keys(testResults).forEach(word => {
+          if (testResults[word].incorrectCount > 0) {
+            updates[word] = {
+              correctCount: 0,
+              incorrectCount: 1,
+              totalTests: 1,
+              lastTested: testResults[word].lastTested
+            };
+          } else {
+            updates[word] = {
+              correctCount: 1,
+              incorrectCount: 0,
+              totalTests: 1,
+              lastTested: testResults[word].lastTested
+            };
+          }
+        });
+        update(testResultsRef, updates).then(() => {
+          document.getElementById('status').innerText = 'Test counts corrected successfully';
+        });
+      }).catch(error => {
+        console.error("Error correcting test counts: ", error);
+      });
+    };
   </script>
+  <style>
+    body {
+      position: relative;
+    }
+    #version {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      font-size: 16px;
+      color: black;
+    }
+  </style>
 </head>
 <body>
   <h1>Upload Word List</h1>
   <input type="file" id="wordFile" accept=".txt">
   <button onclick="uploadWords()">Upload</button>
   <button onclick="addErrorWordsToReview()">Add Error Words</button>
+  <button onclick="correctTestCounts()">修正测试次数</button>
   <progress id="progressBar" value="0" max="100"></progress>
   <p id="status"></p>
+  <div id="version">Version 001</div>
 </body>
 </html>
