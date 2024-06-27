@@ -17,16 +17,11 @@
       text-align: center;
       background: url('pics/cover.jpg') no-repeat center center fixed;
       background-size: cover;
+      cursor: pointer;
     }
     .cover-container h1 {
-      font-size: 150%;
-      color: lightblue;
-    }
-    .cover-container button {
-      font-size: 24px;
-      padding: 10px 20px;
-      margin-top: 20px;
-      cursor: pointer;
+      font-size: 42px;
+      color: black;
     }
     .groups-container {
       display: none; /* Hide the groups container initially */
@@ -137,6 +132,8 @@
     };
 
     document.addEventListener('DOMContentLoaded', function() {
+      document.querySelector('.cover-container').addEventListener('click', startApp);
+
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
       const wordReviewRef = ref(database, 'wordreview');
@@ -340,8 +337,7 @@
 </head>
 <body>
   <div class="cover-container">
-    <h1>欢迎回来词汇训练</h1>
-    <button onclick="startApp()">开始</button>
+    <h1>欢迎 Z 回来词汇训练</h1>
   </div>
 
   <h1>Zoe Vocabulary List</h1>
