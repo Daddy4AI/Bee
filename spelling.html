@@ -14,6 +14,7 @@
       font-size: 30px;
       background: url('pics/backgd01.jpg') no-repeat center center fixed;
       background-size: cover;
+      position: relative; /* Added to position the version label */
     }
     h1 {
       margin-top: 10px;
@@ -63,6 +64,13 @@
       border: 2px solid black;
       z-index: 1000;
       text-align: center;
+      color: white;
+    }
+    #version {
+      position: absolute;
+      bottom: 10px;
+      right: 10px;
+      font-size: 16px;
       color: white;
     }
   </style>
@@ -187,7 +195,6 @@
         resultElement.className = 'correct';
         saveTestResult(words[currentWordIndex].word, true, now);
 
-        // Check if the current word is the last word in the group
         const wordIndex = words[currentWordIndex].index + 1;
         const groupRelativeIndex = groupNumber === 'Review' ? wordIndex : wordIndex - (groupNumber - 1) * 100;
         if (groupRelativeIndex === words.length) {
@@ -288,6 +295,11 @@
       const wordRef = child(ref(database, 'testResults'), word);
       get(wordRef).then(snapshot => {
         const data = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0 };
+        const todayDate = new Date().toISOString().split('T')[0];
+        if (data.lastTested && data.lastTested.startsWith(todayDate)) {
+          // If the last tested time is today, do not update counts
+          return;
+        }
         if (correct) {
           data.correctCount++;
         } else {
@@ -320,5 +332,6 @@
     <p>恭喜你完成这组单词的第一次测试！</p>
     <button onclick="window.location.href='index.html'">返回首页</button>
   </div>
+  <div id="version">Version 001</div> <!-- Added version display -->
 </body>
 </html>
