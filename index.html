@@ -8,8 +8,28 @@
       background-size: cover;
       font-family: Arial, sans-serif;
     }
-    .groups-container {
+    .cover-container {
       display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      text-align: center;
+      background: url('pics/cover.jpg') no-repeat center center fixed;
+      background-size: cover;
+    }
+    .cover-container h1 {
+      font-size: 48px;
+      color: white;
+    }
+    .cover-container button {
+      font-size: 24px;
+      padding: 10px 20px;
+      margin-top: 20px;
+      cursor: pointer;
+    }
+    .groups-container {
+      display: none; /* Hide the groups container initially */
       flex-wrap: wrap;
       justify-content: space-around;
       margin-top: 20px;
@@ -113,6 +133,10 @@
     const testRound = 1;
 
     document.addEventListener('DOMContentLoaded', function() {
+      // Show the cover initially
+      document.querySelector('.cover-container').style.display = 'flex';
+      document.querySelector('.groups-container').style.display = 'none';
+
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
       const wordReviewRef = ref(database, 'wordreview');
@@ -316,9 +340,22 @@
         modal.style.display = 'none';
       }
     };
+<<<<<<< Updated upstream
+=======
+
+    window.startApp = function() {
+      document.querySelector('.cover-container').style.display = 'none';
+      document.querySelector('.groups-container').style.display = 'flex';
+    };
+>>>>>>> Stashed changes
   </script>
 </head>
 <body>
+  <div class="cover-container">
+    <h1>欢迎回来词汇训练</h1>
+    <button onclick="startApp()">开始</button>
+  </div>
+
   <h1>Zoe Vocabulary List</h1>
   <div id="groups" class="groups-container"></div>
 
