@@ -79,6 +79,7 @@
     const testedWordsToday = new Set();
     const incorrectWordsSet = new Set();
     let groupNumber = null;
+    let firstAttempt = true;
 
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -172,6 +173,7 @@
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
       document.getElementById('playWordButton').innerText = 'Play Word';
+      firstAttempt = true;
     };
 
     window.checkSpelling = function() {
@@ -185,7 +187,9 @@
       if (input === word) {
         resultElement.innerText = '正确';
         resultElement.className = 'correct';
-        saveTestResult(words[currentWordIndex].word, true, now);
+        if (firstAttempt) {
+          saveTestResult(words[currentWordIndex].word, true, now);
+        }
 
         // Check if the current word is the last word in the group
         const wordIndex = words[currentWordIndex].index + 1;
@@ -209,8 +213,11 @@
         resultElement.innerHTML = `错误，正确的拼写为 <strong>${words[currentWordIndex].word}</strong>\n<a href="https://www.merriam-webster.com/dictionary/${words[currentWordIndex].word}" target="_blank">查询本单词</a>`;
         resultElement.className = 'incorrect';
         playWordButton.innerText = 'Test Again';
-        saveTestResult(words[currentWordIndex].word, false, now);
-        addToWordReview(words[currentWordIndex].word);
+        if (firstAttempt) {
+          saveTestResult(words[currentWordIndex].word, false, now);
+          addToWordReview(words[currentWordIndex].word);
+        }
+        firstAttempt = false;
       }
       const testedWords = words.filter(w => w.totalTests > 0).length;
       const notTestedWords = words.length - testedWords;
@@ -288,21 +295,20 @@
       const wordRef = child(ref(database, 'testResults'), word);
       get(wordRef).then(snapshot => {
         const data = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0 };
-        if (correct) {
-          data.correctCount++;
-        } else {
-          data.incorrectCount++;
-        }
-        if (isNaN(data.totalTests)) {
-          data.totalTests = 0;
-        }
-        data.totalTests++;
-        data.lastTested = timestamp;
-        update(wordRef, data).then(() => {
-          if (timestamp.startsWith(new Date().toISOString().split('T')[0])) {
-            testedWordsToday.add(word);
+        if (firstAttempt) {
+          if (correct) {
+            data.correctCount++;
+          } else {
+            data.incorrectCount++;
           }
-        });
+          data.totalTests++;
+          data.lastTested = timestamp;
+          update(wordRef, data).then(() => {
+            if (timestamp.startsWith(new Date().toISOString().split('T')[0])) {
+              testedWordsToday.add(word);
+            }
+          });
+        }
       }).catch(error => {
         console.error("Error updating test result: ", error);
       });
