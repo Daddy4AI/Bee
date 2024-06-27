@@ -19,8 +19,8 @@
       background-size: cover;
     }
     .cover-container h1 {
-      font-size: 48px;
-      color: white;
+      font-size: 150%;
+      color: lightblue;
     }
     .cover-container button {
       font-size: 24px;
@@ -130,13 +130,13 @@
 
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
-    const testRound = 1;
+
+    function startApp() {
+      document.querySelector('.cover-container').style.display = 'none';
+      document.querySelector('.groups-container').style.display = 'flex';
+    }
 
     document.addEventListener('DOMContentLoaded', function() {
-      // Show the cover initially
-      document.querySelector('.cover-container').style.display = 'flex';
-      document.querySelector('.groups-container').style.display = 'none';
-
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
       const wordReviewRef = ref(database, 'wordreview');
@@ -185,7 +185,7 @@
           if (reviewWords.length > 0) {
             Promise.all(reviewWords.map(word => {
               return get(child(testResultsRef, word)).then(resultSnapshot => {
-                const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0, correctCount: 0 };
+                const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
                 return { word, ...resultData };
               });
             })).then(wordData => {
@@ -198,17 +198,13 @@
                 return latest;
               }, null);
               const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : 'N/A';
-              const adjustedTestedWords = Math.max(0, testedWords - testRound);
-              const adjustedIncorrectWords = Math.max(0, incorrectWords - testRound);
-              const adjustedTotalTests = Math.max(0, testedWords * 2 - 2 * testRound);
-
               const reviewGroupData = {
                 index: 'Review',
                 start: 1,
                 end: reviewWords.length,
-                testedWords: adjustedTestedWords,
+                testedWords,
                 totalWords: reviewWords.length,
-                incorrectWords: adjustedIncorrectWords,
+                incorrectWords,
                 lastTested: lastTestedFormatted
               };
               displayGroupReview(reviewGroupData);
@@ -340,14 +336,6 @@
         modal.style.display = 'none';
       }
     };
-<<<<<<< Updated upstream
-=======
-
-    window.startApp = function() {
-      document.querySelector('.cover-container').style.display = 'none';
-      document.querySelector('.groups-container').style.display = 'flex';
-    };
->>>>>>> Stashed changes
   </script>
 </head>
 <body>
