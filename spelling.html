@@ -193,27 +193,41 @@
       if (input === word) {
         resultElement.innerText = '正确';
         resultElement.className = 'correct';
-        saveTestResult(words[currentWordIndex].word, true, now);
+        saveTestResult(words[currentWordIndex].word, true, now).then(() => {
+          updateGroupStatsAfterSave();
+          currentWordIndex++;
+          if (!testedWordsToday.has(words[currentWordIndex].word)) {
+            todayTestedCount++;
+            testedWordsToday.add(words[currentWordIndex].word);
+          }
 
-        currentWordIndex++;
-        if (!testedWordsToday.has(words[currentWordIndex].word)) {
-          todayTestedCount++;
-          testedWordsToday.add(words[currentWordIndex].word);
-        }
-
-        if (currentWordIndex < words.length) {
-          setTimeout(displayWord, 500);
-        } else {
-          saveIncorrectWords();
-          checkIfAllTestsCompleted();
-        }
+          if (currentWordIndex < words.length) {
+            setTimeout(displayWord, 500);
+          } else {
+            saveIncorrectWords();
+            checkIfAllTestsCompleted();
+          }
+        });
       } else {
         resultElement.innerHTML = `错误，正确的拼写为 <strong>${words[currentWordIndex].word}</strong>\n<a href="https://www.merriam-webster.com/dictionary/${words[currentWordIndex].word}" target="_blank">查询本单词</a>`;
         resultElement.className = 'incorrect';
         playWordButton.innerText = 'Test Again';
-        saveTestResult(words[currentWordIndex].word, false, now);
-        addToWordReview(words[currentWordIndex].word);
+        saveTestResult(words[currentWordIndex].word, false, now).then(() => {
+          addToWordReview(words[currentWordIndex].word);
+          updateGroupStatsAfterSave();
+        });
       }
+    };
+
+    function checkIfAllTestsCompleted() {
+      const totalTestsSet = new Set(words.map(word => word.totalTests));
+      if (totalTestsSet.size === 1) {
+        const totalTests = [...totalTestsSet][0];
+        showCompletionMessage(totalTests);
+      }
+    }
+
+    function updateGroupStatsAfterSave() {
       const testedWords = words.filter(w => w.totalTests > 0).length;
       const notTestedWords = words.length - testedWords;
       const lastTested = words.reduce((latest, w) => {
@@ -224,14 +238,6 @@
       }, null);
       const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : 'N/A';
       updateGroupStats(testedWords, notTestedWords, todayTestedCount, lastTestedFormatted);
-    };
-
-    function checkIfAllTestsCompleted() {
-      const totalTestsSet = new Set(words.map(word => word.totalTests));
-      if (totalTestsSet.size === 1) {
-        const totalTests = [...totalTestsSet][0];
-        showCompletionMessage(totalTests);
-      }
     }
 
     window.retryWord = function() {
@@ -295,31 +301,33 @@
     });
 
     window.saveTestResult = function(word, correct, timestamp) {
-      const wordRef = child(ref(database, 'testResults'), word);
-      get(wordRef).then(snapshot => {
-        const data = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0 };
-        const todayDate = new Date().toISOString().split('T')[0];
-        if (data.lastTested && data.lastTested.startsWith(todayDate)) {
-          // If the last tested time is today, do not update counts
-          return;
-        }
-        if (correct) {
-          data.correctCount++;
-        } else {
-          data.incorrectCount++;
-        }
-        if (isNaN(data.totalTests)) {
-          data.totalTests = 0;
-        }
-        data.totalTests++;
-        data.lastTested = timestamp;
-        update(wordRef, data).then(() => {
-          if (timestamp.startsWith(new Date().toISOString().split('T')[0])) {
-            testedWordsToday.add(word);
+      return new Promise((resolve, reject) => {
+        const wordRef = child(ref(database, 'testResults'), word);
+        get(wordRef).then(snapshot => {
+          const data = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0 };
+          const todayDate = new Date().toISOString().split('T')[0];
+          if (data.lastTested && data.lastTested.startsWith(todayDate)) {
+            // If the last tested time is today, do not update counts
+            resolve();
+            return;
           }
-        });
-      }).catch(error => {
-        console.error("Error updating test result: ", error);
+          if (correct) {
+            data.correctCount++;
+          } else {
+            data.incorrectCount++;
+          }
+          if (isNaN(data.totalTests)) {
+            data.totalTests = 0;
+          }
+          data.totalTests++;
+          data.lastTested = timestamp;
+          update(wordRef, data).then(() => {
+            if (timestamp.startsWith(new Date().toISOString().split('T')[0])) {
+              testedWordsToday.add(word);
+            }
+            resolve();
+          }).catch(reject);
+        }).catch(reject);
       });
     };
   </script>
@@ -335,6 +343,6 @@
     <p>恭喜你完成这组单词的第一次测试！</p>
     <button onclick="window.location.href='index.html'">返回首页</button>
   </div>
-  <div id="version">Version 200</div> <!-- Added version display -->
+  <div id="version">Version 1000000000</div> <!-- Added version display -->
 </body>
 </html>
