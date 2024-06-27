@@ -79,7 +79,7 @@
     const testedWordsToday = new Set();
     const incorrectWordsSet = new Set();
     let groupNumber = null;
-    let firstAttempt = true;
+    let firstAttempt = true; // Initialize as true when starting the test
 
     document.addEventListener('DOMContentLoaded', function() {
       const urlParams = new URLSearchParams(window.location.search);
@@ -189,6 +189,7 @@
         resultElement.className = 'correct';
         if (firstAttempt) {
           saveTestResult(words[currentWordIndex].word, true, now); // Save only on first attempt
+          firstAttempt = false; // Set firstAttempt to false after recording the first attempt
         }
 
         // Check if the current word is the last word in the group
@@ -216,8 +217,8 @@
         if (firstAttempt) {
           saveTestResult(words[currentWordIndex].word, false, now); // Save only on first attempt
           addToWordReview(words[currentWordIndex].word);
+          firstAttempt = false; // Set firstAttempt to false after recording the first attempt
         }
-        firstAttempt = false; // After first attempt, set to false
       }
       const testedWords = words.filter(w => w.totalTests > 0).length;
       const notTestedWords = words.length - testedWords;
