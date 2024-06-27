@@ -165,7 +165,7 @@
       const groupRelativeIndex = groupNumber === 'Review' ? wordIndex : wordIndex - (groupNumber - 1) * 100;
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
-      utterance.rate = 0.6; // Slow down the speech rate
+      utterance.rate = 0.8; // Slow down the speech rate
       speechSynthesis.speak(utterance);
       document.getElementById('wordNumber').innerText = `单词序列号: ${groupRelativeIndex} out of ${words.length} words`;
       document.getElementById('spellingInput').value = '';
@@ -187,13 +187,6 @@
         resultElement.className = 'correct';
         saveTestResult(words[currentWordIndex].word, true, now);
 
-        // Check if the current word is the last word in the group
-        const wordIndex = words[currentWordIndex].index + 1;
-        const groupRelativeIndex = groupNumber === 'Review' ? wordIndex : wordIndex - (groupNumber - 1) * 100;
-        if (groupRelativeIndex === words.length) {
-          showCompletionMessage();
-        }
-
         currentWordIndex++;
         if (!testedWordsToday.has(words[currentWordIndex].word)) {
           todayTestedCount++;
@@ -210,7 +203,6 @@
         resultElement.className = 'incorrect';
         playWordButton.innerText = 'Test Again';
         saveTestResult(words[currentWordIndex].word, false, now);
-        addToWordReview(words[currentWordIndex].word);
       }
       const testedWords = words.filter(w => w.totalTests > 0).length;
       const notTestedWords = words.length - testedWords;
@@ -271,27 +263,22 @@
       });
     };
 
-    window.addEventListener('keydown', function(event) {
-      if (event.key === 'Enter') {
-        const playWordButton = document.getElementById('playWordButton');
-        if (playWordButton.innerText === '下一个') {
-          displayWord();
-        } else if (playWordButton.innerText === 'Test Again') {
-          retryWord();
-        } else {
-          checkSpelling();
-        }
-      }
-    });
-
     window.saveTestResult = function(word, correct, timestamp) {
       const wordRef = child(ref(database, 'testResults'), word);
       get(wordRef).then(snapshot => {
         const data = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0 };
         if (correct) {
           data.correctCount++;
+          incorrectWordsSet.delete(word);  // Remove word from incorrect set if correct
+          if (data.incorrectCount === 1) { // If it was marked incorrect before, reset the count
+            data.incorrectCount = 0;
+          }
+          currentWordIndex++;
         } else {
-          data.incorrectCount++;
+          if (data.incorrectCount === 0) {
+            data.incorrectCount = 1;
+            incorrectWordsSet.add(word); // Add word to incorrect set
+          }
         }
         if (isNaN(data.totalTests)) {
           data.totalTests = 0;
@@ -307,6 +294,19 @@
         console.error("Error updating test result: ", error);
       });
     };
+
+    window.addEventListener('keydown', function(event) {
+      if (event.key === 'Enter') {
+        const playWordButton = document.getElementById('playWordButton');
+        if (playWordButton.innerText === '下一个') {
+          displayWord();
+        } else if (playWordButton.innerText === 'Test Again') {
+          retryWord();
+        } else {
+          checkSpelling();
+        }
+      }
+    });
   </script>
 </head>
 <body>
