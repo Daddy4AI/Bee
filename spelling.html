@@ -77,8 +77,7 @@
     let words = [];
     let todayTestedCount = 0;
     const testedWordsToday = new Set();
-    let retryingWord = false;
-    let incorrectAttempts = 0;
+    const incorrectWordsSet = new Set();
     let groupNumber = null;
 
     document.addEventListener('DOMContentLoaded', function() {
@@ -166,7 +165,7 @@
       const groupRelativeIndex = groupNumber === 'Review' ? wordIndex : wordIndex - (groupNumber - 1) * 100;
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
-      utterance.rate = 0.8; // Slow down the speech rate
+      utterance.rate = 0.6; // Slow down the speech rate
       speechSynthesis.speak(utterance);
       document.getElementById('wordNumber').innerText = `单词序列号: ${groupRelativeIndex} out of ${words.length} words`;
       document.getElementById('spellingInput').value = '';
@@ -187,11 +186,6 @@
         resultElement.innerText = '正确';
         resultElement.className = 'correct';
         saveTestResult(words[currentWordIndex].word, true, now);
-
-        if (retryingWord) {
-          retryingWord = false;
-          incorrectAttempts = 0;
-        }
 
         // Check if the current word is the last word in the group
         const wordIndex = words[currentWordIndex].index + 1;
@@ -215,9 +209,8 @@
         resultElement.innerHTML = `错误，正确的拼写为 <strong>${words[currentWordIndex].word}</strong>\n<a href="https://www.merriam-webster.com/dictionary/${words[currentWordIndex].word}" target="_blank">查询本单词</a>`;
         resultElement.className = 'incorrect';
         playWordButton.innerText = 'Test Again';
-        retryingWord = true;
-        incorrectAttempts++;
         saveTestResult(words[currentWordIndex].word, false, now);
+        addToWordReview(words[currentWordIndex].word);
       }
       const testedWords = words.filter(w => w.totalTests > 0).length;
       const notTestedWords = words.length - testedWords;
@@ -296,11 +289,9 @@
       get(wordRef).then(snapshot => {
         const data = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0 };
         if (correct) {
-          data.correctCount = 0;
+          data.correctCount++;
         } else {
-          if (data.incorrectCount === 0) {
-            data.incorrectCount = 1;
-          }
+          data.incorrectCount++;
         }
         if (isNaN(data.totalTests)) {
           data.totalTests = 0;
