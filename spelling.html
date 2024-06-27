@@ -52,6 +52,16 @@
       font-size: 20px;
       margin-top: 20px;
     }
+    #groupStatsTable {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    #groupStatsTable th, #groupStatsTable td {
+      border: 1px solid black;
+      padding: 8px;
+      text-align: center;
+    }
     #msgBox {
       display: none;
       position: absolute;
@@ -71,7 +81,7 @@
       bottom: 10px;
       right: 10px;
       font-size: 16px;
-      color: white;
+      color: black; /* Changed to black */
     }
   </style>
   <script type="module">
@@ -244,7 +254,7 @@
       const word = words[currentWordIndex].word;
       const utterance = new SpeechSynthesisUtterance(word);
       utterance.lang = 'en-US';
-      utterance.rate = 0.8; // Slow down the speech rate
+      utterance.rate = 0.6; // Slow down the speech rate
       speechSynthesis.speak(utterance);
       document.getElementById('spellingInput').value = '';
       document.getElementById('spellingInput').focus();
@@ -253,9 +263,32 @@
     };
 
     window.updateGroupStats = function(testedWords, notTestedWords, todayTestedCount, lastTestedFormatted) {
+      const totalTestsMap = new Map();
+      words.forEach(word => {
+        if (totalTestsMap.has(word.totalTests)) {
+          totalTestsMap.set(word.totalTests, totalTestsMap.get(word.totalTests) + 1);
+        } else {
+          totalTestsMap.set(word.totalTests, 1);
+        }
+      });
+
+      const tableRows = [];
+      totalTestsMap.forEach((count, totalTests) => {
+        tableRows.push(`<tr><td>${totalTests}</td><td>${count}</td></tr>`);
+      });
+
       document.getElementById('groupStats').innerHTML = `
-        <p>已经测试单词数: ${testedWords}</p>
-        <p>还没测试单词数: ${notTestedWords}</p>
+        <table id="groupStatsTable">
+          <thead>
+            <tr>
+              <th>测试次数</th>
+              <th>单词数</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tableRows.join('')}
+          </tbody>
+        </table>
         <p>今天测试单词数: ${todayTestedCount}</p>
         <p>最后测试时间: ${lastTestedFormatted}</p>
       `;
@@ -343,6 +376,6 @@
     <p>恭喜你完成这组单词的第一次测试！</p>
     <button onclick="window.location.href='index.html'">返回首页</button>
   </div>
-  <div id="version">Version 1000000000</div> <!-- Added version display -->
+  <div id="version">Version 12123</div> <!-- Changed color to black -->
 </body>
 </html>
