@@ -173,7 +173,7 @@
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
       document.getElementById('playWordButton').innerText = 'Play Word';
-      firstAttempt = true;
+      firstAttempt = true; // Reset firstAttempt for each new word
     };
 
     window.checkSpelling = function() {
@@ -188,7 +188,7 @@
         resultElement.innerText = '正确';
         resultElement.className = 'correct';
         if (firstAttempt) {
-          saveTestResult(words[currentWordIndex].word, true, now);
+          saveTestResult(words[currentWordIndex].word, true, now); // Save only on first attempt
         }
 
         // Check if the current word is the last word in the group
@@ -214,10 +214,10 @@
         resultElement.className = 'incorrect';
         playWordButton.innerText = 'Test Again';
         if (firstAttempt) {
-          saveTestResult(words[currentWordIndex].word, false, now);
+          saveTestResult(words[currentWordIndex].word, false, now); // Save only on first attempt
           addToWordReview(words[currentWordIndex].word);
         }
-        firstAttempt = false;
+        firstAttempt = false; // After first attempt, set to false
       }
       const testedWords = words.filter(w => w.totalTests > 0).length;
       const notTestedWords = words.length - testedWords;
