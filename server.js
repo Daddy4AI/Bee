@@ -3,7 +3,7 @@ const axios = require('axios');
 const app = express();
 app.use(express.json());
 
-const MERRIAM_WEBSTER_API_KEY = '4c841aa5-4903-4de1-80d6-b81c397935a9'; // Replace with your API key
+const MERRIAM_WEBSTER_API_KEY = 4c841aa5-4903-4de1-80d6-b81c397935a9; // Replace with your API key
 
 app.post('/pronounce', async (req, res) => {
   const { word } = req.body;
