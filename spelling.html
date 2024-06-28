@@ -50,6 +50,11 @@
       margin-top: 20px;
       white-space: pre-line;
     }
+    #exampleSentence {
+      margin-top: 10px;
+      font-size: 24px;
+      color: blue;
+    }
     #groupStats {
       font-size: 20px;
       margin-top: 20px;
@@ -180,6 +185,25 @@
       });
     }
 
+    async function getExampleSentence(word) {
+      const response = await fetch(`https://www.dictionaryapi.com/api/v3/references/collegiate/json/${word}?key=${apiKey}`);
+      const data = await response.json();
+      if (data.length > 0 && data[0].def && data[0].def[0].sseq) {
+        const senses = data[0].def[0].sseq;
+        for (const sense of senses) {
+          const dt = sense[0][1].dt;
+          if (dt) {
+            for (const item of dt) {
+              if (item[0] === "vis") {
+                return item[1][0].t;
+              }
+            }
+          }
+        }
+      }
+      return "No example sentence available.";
+    }
+
     async function getAudioUrl(word) {
       const response = await fetch(`https://www.dictionaryapi.com/api/v3/references/collegiate/json/${word}?key=${apiKey}`);
       const data = await response.json();
@@ -216,10 +240,11 @@
       document.getElementById('spellingInput').value = '';
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
+      document.getElementById('exampleSentence').innerText = '';
       document.getElementById('playWordButton').innerText = 'Play Word';
     };
 
-    window.checkSpelling = function() {
+    window.checkSpelling = async function() {
       const input = document.getElementById('spellingInput').value.trim().toLowerCase();
       const word = words[currentWordIndex].word.toLowerCase();
       const resultElement = document.getElementById('result');
@@ -230,6 +255,8 @@
       if (input === word) {
         resultElement.innerText = '正确';
         resultElement.className = 'correct';
+        const exampleSentence = await getExampleSentence(words[currentWordIndex].word);
+        document.getElementById('exampleSentence').innerText = exampleSentence;
         saveTestResult(words[currentWordIndex].word, true, now).then(() => {
           updateGroupStatsAfterSave();
           currentWordIndex++;
@@ -239,7 +266,7 @@
           }
 
           if (currentWordIndex < words.length) {
-            setTimeout(displayWord, 500);
+            setTimeout(displayWord, 3000);
           } else {
             saveIncorrectWords();
             checkIfAllTestsCompleted();
@@ -283,6 +310,7 @@
       document.getElementById('spellingInput').value = '';
       document.getElementById('spellingInput').focus();
       document.getElementById('result').innerText = '';
+      document.getElementById('exampleSentence').innerText = '';
       document.getElementById('playWordButton').innerText = 'Play Word';
     };
 
@@ -394,11 +422,12 @@
   <button id="playWordButton" onclick="displayWord()">Play Word</button>
   <input type="text" id="spellingInput" autocomplete="off" autocorrect="off" spellcheck="false">
   <p id="result"></p>
+  <p id="exampleSentence"></p>
   <div id="groupStats"></div>
   <div id="msgBox">
     <p>恭喜你完成这组单词的第一次测试！</p>
     <button onclick="window.location.href='index.html'">返回首页</button>
   </div>
-  <div id="version">Version Merriam-Webster Voice</div>
+  <div id="version">Version 001</div>
 </body>
 </html>
