@@ -14,8 +14,17 @@ app.post('/pronounce', async (req, res) => {
 
     if (Array.isArray(data) && data.length > 0 && data[0].hwi && data[0].hwi.prs && data[0].hwi.prs[0].sound && data[0].hwi.prs[0].sound.audio) {
       const audioFile = data[0].hwi.prs[0].sound.audio;
-      const subdirectory = audioFile.charAt(0);
-      const audioUrl = `https://media.merriam-webster.com/soundc11/${subdirectory}/${audioFile}.wav`;
+      let subdirectory = audioFile.charAt(0);
+
+      if (audioFile.startsWith('bix')) {
+        subdirectory = 'bix';
+      } else if (audioFile.startsWith('gg')) {
+        subdirectory = 'gg';
+      } else if (/\d/.test(subdirectory)) {
+        subdirectory = 'number';
+      }
+
+      const audioUrl = `https://media.merriam-webster.com/audio/prons/en/us/mp3/${subdirectory}/${audioFile}.mp3`;
       res.json({ audioUrl });
     } else {
       res.status(404).send('Audio pronunciation not found');
