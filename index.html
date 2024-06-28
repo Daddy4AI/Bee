@@ -2,7 +2,9 @@
 <html>
 <head>
   <title>Zoe Vocabulary List</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
+    /* Your existing styles here */
     body {
       background: url('pics/backgd05.jpg') no-repeat center center fixed;
       background-size: cover;
@@ -125,6 +127,7 @@
 
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
+    const apiKey = '4c841aa5-4903-4de1-80d6-b81c397935a9';
 
     window.startApp = function() {
       document.querySelector('.cover-container').style.display = 'none';
@@ -268,6 +271,25 @@
       container.prepend(groupDiv);
     }
 
+    async function getExampleSentence(word) {
+      const response = await fetch(`https://www.dictionaryapi.com/api/v3/references/collegiate/json/${word}?key=${apiKey}`);
+      const data = await response.json();
+      if (data.length > 0 && data[0].def && data[0].def[0].sseq) {
+        const senses = data[0].def[0].sseq;
+        for (const sense of senses) {
+          const dt = sense[0][1].dt;
+          if (dt) {
+            for (const item of dt) {
+              if (item[0] === "vis") {
+                return item[1][0].t;
+              }
+            }
+          }
+        }
+      }
+      return "No example sentence available.";
+    }
+
     window.startTest = function(groupNumber) {
       window.location.href = `spelling.html?group=${groupNumber}`;
     };
@@ -275,7 +297,7 @@
     window.viewWords = function(groupNumber) {
       const wordListModal = document.getElementById('wordListModal');
       const wordListTable = document.getElementById('wordListTable');
-      wordListTable.innerHTML = '<tr><th>序列号</th><th>单词</th><th>Dictionary</th><th>测试总数</th></tr>';
+      wordListTable.innerHTML = '<tr><th>序列号</th><th>单词</th><th>例句</th><th>Dictionary</th><th>测试总数</th></tr>';
 
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
@@ -296,12 +318,12 @@
       wordListModal.style.display = 'block';
     };
 
-    function populateWordListTable(groupWords, testResultsRef, wordListTable) {
-      Promise.all(groupWords.map((word, index) => {
-        return get(child(testResultsRef, word)).then(resultSnapshot => {
-          const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
-          return { word, index: index + 1, ...resultData };
-        });
+    async function populateWordListTable(groupWords, testResultsRef, wordListTable) {
+      Promise.all(groupWords.map(async (word, index) => {
+        const resultSnapshot = await get(child(testResultsRef, word));
+        const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
+        const exampleSentence = await getExampleSentence(word);
+        return { word, index: index + 1, ...resultData, exampleSentence };
       })).then(wordData => {
         wordData.forEach(data => {
           const row = wordListTable.insertRow();
@@ -309,15 +331,17 @@
           const cell2 = row.insertCell(1);
           const cell3 = row.insertCell(2);
           const cell4 = row.insertCell(3);
+          const cell5 = row.insertCell(4);
           cell1.innerHTML = data.index;
           cell2.innerHTML = data.incorrectCount > 0 ? `<span class="incorrect">${data.word}</span>` : data.word;
-          cell3.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">Dictionary</a>`;
-          cell4.innerHTML = data.totalTests;
+          cell3.innerHTML = data.exampleSentence;
+          cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">Dictionary</a>`;
+          cell5.innerHTML = data.totalTests;
         });
 
         const closeRow = wordListTable.insertRow();
         const closeCell = closeRow.insertCell(0);
-        closeCell.colSpan = 4;
+        closeCell.colSpan = 5;
         closeCell.innerHTML = '<button onclick="closeModal()">Close</button>';
         closeCell.style.textAlign = 'center';
       });
