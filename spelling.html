@@ -51,7 +51,7 @@
     }
     #exampleSentence {
       margin-top: 10px;
-      font-size: 24px;
+      font-size: 30px; /* Increased font size */
       color: blue;
     }
     #groupStats {
@@ -227,7 +227,8 @@
         const audio = new Audio(audioUrl);
         audio.play();
       } else {
-        alert('Audio not available for this word.');
+        const utterance = new SpeechSynthesisUtterance(word);
+        window.speechSynthesis.speak(utterance);
       }
     }
 
