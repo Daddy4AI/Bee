@@ -177,34 +177,34 @@
     }
 
     window.displayWord = async function() {
-      if (words.length === 0) return;
-      const word = words[currentWordIndex].word;
-      const wordIndex = words[currentWordIndex].index + 1;
-      const groupRelativeIndex = groupNumber === 'Review' ? wordIndex : wordIndex - (groupNumber - 1) * 100;
+  if (words.length === 0) return;
+  const word = words[currentWordIndex].word;
+  const wordIndex = words[currentWordIndex].index + 1;
+  const groupRelativeIndex = groupNumber === 'Review' ? wordIndex : wordIndex - (groupNumber - 1) * 100;
 
-      try {
-        const response = await fetch('/pronounce', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ word: word })
-        });
-        if (response.ok) {
-          const data = await response.json();
-          const audio = new Audio(data.audioUrl);
-          audio.play();
-        } else {
-          console.error('Error fetching audio:', response.statusText);
-        }
-      } catch (error) {
-        console.error('Error:', error);
-      }
+  try {
+    const response = await fetch('/pronounce', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ word: word })
+    });
+    if (response.ok) {
+      const data = await response.json();
+      const audio = new Audio(data.audioUrl);
+      audio.play();
+    } else {
+      console.error('Error fetching audio:', response.statusText);
+    }
+  } catch (error) {
+    console.error('Error:', error);
+  }
 
-      document.getElementById('wordNumber').innerText = `单词序列号: ${groupRelativeIndex} out of ${words.length} words`;
-      document.getElementById('spellingInput').value = '';
-      document.getElementById('spellingInput').focus();
-      document.getElementById('result').innerText = '';
-      document.getElementById('playWordButton').innerText = 'Play Word';
-    };
+  document.getElementById('wordNumber').innerText = `单词序列号: ${groupRelativeIndex} out of ${words.length} words`;
+  document.getElementById('spellingInput').value = '';
+  document.getElementById('spellingInput').focus();
+  document.getElementById('result').innerText = '';
+  document.getElementById('playWordButton').innerText = 'Play Word';
+};
 
 
     window.checkSpelling = function() {
@@ -391,6 +391,6 @@
     <p>恭喜你完成这组单词的第一次测试！</p>
     <button onclick="window.location.href='index.html'">返回首页</button>
   </div>
-  <div id="version">Version 004voice</div> <!-- Changed color to black -->
+  <div id="version">Version 005voice</div> <!-- Changed color to black -->
 </body>
 </html>
