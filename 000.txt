@@ -1,6 +1,0 @@
-Spelling：
-
-修改测试次数的统计方式：
-如果单词第一次测试错误，incorrectCount为1，接下来这个单词的测试
-- 如果继续错误 incorrectCount还是为1，继续测试该单词，
-- 如果拼写正确correctCount为0，并可以进行下一个单词。
