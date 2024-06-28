@@ -4,7 +4,6 @@
   <title>Spelling Test - Group #</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <style>
-    /* Your existing styles here */
     body {
       display: flex;
       flex-direction: column;
@@ -195,7 +194,9 @@
           if (dt) {
             for (const item of dt) {
               if (item[0] === "vis") {
-                return item[1][0].t;
+                let sentence = item[1][0].t;
+                sentence = sentence.replace(/{wi}/g, '').replace(/{\/wi}/g, '');
+                return sentence;
               }
             }
           }
@@ -428,6 +429,6 @@
     <p>恭喜你完成这组单词的第一次测试！</p>
     <button onclick="window.location.href='index.html'">返回首页</button>
   </div>
-  <div id="version">Version 001</div>
+  <div id="version">Voice from Merriam-Webster</div>
 </body>
 </html>
