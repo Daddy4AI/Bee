@@ -118,11 +118,11 @@
       color: red;
     }
     #version {
-      position: fixed;
-      bottom: 10px;
-      right: 10px;
-      font-size: 16px;
-      color: black;
+      text-align: right;
+      margin-top: 20px;
+      margin-right: 20px;
+      font-size: 14px;
+      color: #666;
     }
   </style>
   <script type="module">
@@ -158,13 +158,19 @@
               return { word, ...resultData };
             });
           })).then(wordData => {
-            wordData = wordData.filter(w => w.incorrectCount === 0 && w.totalTests === 1 && w.correctCount === 1);
             wordData.sort((a, b) => {
-              if (a.totalTests !== b.totalTests) return a.totalTests - b.totalTests;
-              if (a.incorrectCount !== b.incorrectCount) return b.incorrectCount - a.incorrectCount;
-              if (a.index !== b.index) return a.index - b.index;
-              return new Date(a.lastTested) - new Date(b.lastTested);
+              if (a.totalTests === b.totalTests) {
+                if (a.incorrectCount === b.incorrectCount) {
+                  if (a.index === b.index) {
+                    return new Date(a.lastTested) - new Date(b.lastTested);
+                  }
+                  return a.index - b.index;
+                }
+                return b.incorrectCount - a.incorrectCount;
+              }
+              return a.totalTests - b.totalTests;
             });
+
             const testedWords = wordData.filter(w => w.totalTests > 0).length;
             const incorrectWords = wordData.filter(w => w.incorrectCount > 0).length;
             const lastTested = wordData.reduce((latest, w) => {
@@ -200,13 +206,19 @@
                 return { word, ...resultData };
               });
             })).then(wordData => {
-              wordData = wordData.filter(w => w.incorrectCount === 0 && w.totalTests === 1 && w.correctCount === 1);
               wordData.sort((a, b) => {
-                if (a.totalTests !== b.totalTests) return a.totalTests - b.totalTests;
-                if (a.incorrectCount !== b.incorrectCount) return b.incorrectCount - a.incorrectCount;
-                if (a.index !== b.index) return a.index - b.index;
-                return new Date(a.lastTested) - new Date(b.lastTested);
+                if (a.totalTests === b.totalTests) {
+                  if (a.incorrectCount === b.incorrectCount) {
+                    if (a.index === b.index) {
+                      return new Date(a.lastTested) - new Date(b.lastTested);
+                    }
+                    return a.index - b.index;
+                  }
+                  return b.incorrectCount - a.incorrectCount;
+                }
+                return a.totalTests - b.totalTests;
               });
+
               const testedWords = wordData.filter(w => w.totalTests > 0).length;
               const incorrectWords = wordData.filter(w => w.incorrectCount > 0).length;
               const lastTested = wordData.reduce((latest, w) => {
@@ -320,10 +332,20 @@
     function populateWordListTable(groupWords, testResultsRef, wordListTable) {
       Promise.all(groupWords.map((word, index) => {
         return get(child(testResultsRef, word)).then(resultSnapshot => {
-          const resultData = resultSnapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0 };
+          const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
           return { word, index: index + 1, ...resultData };
         });
       })).then(wordData => {
+        wordData.sort((a, b) => {
+          if (a.totalTests === b.totalTests) {
+            if (a.incorrectCount === b.incorrectCount) {
+              return a.index - b.index;
+            }
+            return b.incorrectCount - a.incorrectCount;
+          }
+          return a.totalTests - b.totalTests;
+        });
+
         wordData.forEach(data => {
           const row = wordListTable.insertRow();
           const cell1 = row.insertCell(0);
@@ -331,11 +353,12 @@
           const cell3 = row.insertCell(2);
           const cell4 = row.insertCell(3);
           const cell5 = row.insertCell(4);
+
           cell1.innerHTML = data.index;
           cell2.innerHTML = data.incorrectCount > 0 ? `<span class="incorrect">${data.word}</span>` : data.word;
           cell3.innerHTML = data.index;
           cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">查询</a>`;
-          cell5.innerHTML = `${data.incorrectCount} / ${data.correctCount} / ${data.totalTests}`;
+          cell5.innerHTML = `${data.incorrectCount} / ${data.totalTests - data.incorrectCount} / ${data.totalTests}`;
         });
 
         const closeRow = wordListTable.insertRow();
@@ -373,6 +396,6 @@
     </div>
   </div>
 
-  <div id="version">Release v0.8</div>
+  <div id="version">release v0.9</div>
 </body>
 </html>
