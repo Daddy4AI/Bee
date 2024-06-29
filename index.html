@@ -24,7 +24,7 @@
       color: black;
     }
     .groups-container {
-      display: none;
+      display: none; /* Hide the groups container initially */
       flex-wrap: wrap;
       justify-content: space-around;
       margin-top: 20px;
@@ -117,13 +117,6 @@
     .incorrect {
       color: red;
     }
-    #version {
-      text-align: right;
-      margin-top: 20px;
-      margin-right: 20px;
-      font-size: 14px;
-      color: #666;
-    }
   </style>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
@@ -141,36 +134,23 @@
     document.addEventListener('DOMContentLoaded', function() {
       document.querySelector('.cover-container').addEventListener('click', startApp);
 
-      const wordListRef = ref(database, 'wordlist1'); // Change 'wordlist1' as needed
+      const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
       const wordReviewRef = ref(database, 'wordreview');
 
       get(wordListRef).then(snapshot => {
-        const words = snapshot.val() || {};
-        const wordArray = Object.values(words);
+        const words = snapshot.val() || [];
         const groups = [];
-
-        for (let i = 0; i < wordArray.length; i += 100) {
-          groups.push(wordArray.slice(i, i + 100));
+        for (let i = 0; i < words.length; i += 100) {
+          groups.push(words.slice(i, i + 100));
         }
-
         Promise.all(groups.map((group, index) => {
-          return Promise.all(group.map(wordData => {
-            return get(child(testResultsRef, wordData.word)).then(resultSnapshot => {
+          return Promise.all(group.map(word => {
+            return get(child(testResultsRef, word)).then(resultSnapshot => {
               const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
-              return { ...wordData, ...resultData };
+              return { word, ...resultData };
             });
           })).then(wordData => {
-            wordData.sort((a, b) => {
-              if (a.totalTests === b.totalTests) {
-                if (a.incorrectCount === b.incorrectCount) {
-                  return new Date(a.lastTested) - new Date(b.lastTested);
-                }
-                return b.incorrectCount - a.incorrectCount;
-              }
-              return a.totalTests - b.totalTests;
-            });
-
             const testedWords = wordData.filter(w => w.totalTests > 0).length;
             const incorrectWords = wordData.filter(w => w.incorrectCount > 0).length;
             const lastTested = wordData.reduce((latest, w) => {
@@ -206,16 +186,6 @@
                 return { word, ...resultData };
               });
             })).then(wordData => {
-              wordData.sort((a, b) => {
-                if (a.totalTests === b.totalTests) {
-                  if (a.incorrectCount === b.incorrectCount) {
-                    return new Date(a.lastTested) - new Date(b.lastTested);
-                  }
-                  return b.incorrectCount - a.incorrectCount;
-                }
-                return a.totalTests - b.totalTests;
-              });
-
               const testedWords = wordData.filter(w => w.totalTests > 0).length;
               const incorrectWords = wordData.filter(w => w.incorrectCount > 0).length;
               const lastTested = wordData.reduce((latest, w) => {
@@ -305,24 +275,21 @@
     window.viewWords = function(groupNumber) {
       const wordListModal = document.getElementById('wordListModal');
       const wordListTable = document.getElementById('wordListTable');
-      wordListTable.innerHTML = '<tr><th>顺序</th><th>单词</th><th>序号</th><th>查询</th><th>次数</th></tr>';
+      wordListTable.innerHTML = '<tr><th>序列号</th><th>单词</th><th>Dictionary</th><th>测试总数</th></tr>';
 
-      const wordListRef = ref(database, 'wordlist1'); // Change 'wordlist1' as needed
+      const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
       get(wordListRef).then(snapshot => {
-        const words = snapshot.val() || {};
-        let groupWords = [];
-
+        const words = snapshot.val() || [];
+        let groupWords;
         if (groupNumber === 'Review') {
           const wordReviewRef = ref(database, 'wordreview');
           get(wordReviewRef).then(reviewSnapshot => {
-            const reviewWords = reviewSnapshot.val() || [];
-            groupWords = Object.values(words).filter(wordData => reviewWords.includes(wordData.word));
+            groupWords = reviewSnapshot.val() || [];
             populateWordListTable(groupWords, testResultsRef, wordListTable);
           });
         } else {
-          const wordArray = Object.values(words);
-          groupWords = wordArray.slice((groupNumber - 1) * 100, groupNumber * 100);
+          groupWords = words.slice((groupNumber - 1) * 100, groupNumber * 100);
           populateWordListTable(groupWords, testResultsRef, wordListTable);
         }
       });
@@ -330,40 +297,27 @@
     };
 
     function populateWordListTable(groupWords, testResultsRef, wordListTable) {
-      Promise.all(groupWords.map((wordData, index) => {
-        return get(child(testResultsRef, wordData.word)).then(resultSnapshot => {
+      Promise.all(groupWords.map((word, index) => {
+        return get(child(testResultsRef, word)).then(resultSnapshot => {
           const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
-          return { ...wordData, listIndex: index + 1, ...resultData };
+          return { word, index: index + 1, ...resultData };
         });
       })).then(wordData => {
-        wordData.sort((a, b) => {
-          if (a.totalTests === b.totalTests) {
-            if (a.incorrectCount === b.incorrectCount) {
-              return a.listIndex - b.listIndex;
-            }
-            return b.incorrectCount - a.incorrectCount;
-          }
-          return a.totalTests - b.totalTests;
-        });
-
         wordData.forEach(data => {
           const row = wordListTable.insertRow();
           const cell1 = row.insertCell(0);
           const cell2 = row.insertCell(1);
           const cell3 = row.insertCell(2);
           const cell4 = row.insertCell(3);
-          const cell5 = row.insertCell(4);
-
-          cell1.innerHTML = data.listIndex;
+          cell1.innerHTML = data.index;
           cell2.innerHTML = data.incorrectCount > 0 ? `<span class="incorrect">${data.word}</span>` : data.word;
-          cell3.innerHTML = data.wordlistIndex;
-          cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">查询</a>`;
-          cell5.innerHTML = `${data.incorrectCount} / ${data.totalTests - data.incorrectCount} / ${data.totalTests}`;
+          cell3.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">Dictionary</a>`;
+          cell4.innerHTML = data.totalTests;
         });
 
         const closeRow = wordListTable.insertRow();
         const closeCell = closeRow.insertCell(0);
-        closeCell.colSpan = 5;
+        closeCell.colSpan = 4;
         closeCell.innerHTML = '<button onclick="closeModal()">Close</button>';
         closeCell.style.textAlign = 'center';
       });
@@ -395,7 +349,5 @@
       <table id="wordListTable" class="word-list-table"></table>
     </div>
   </div>
-
-  <div id="version">release v120</div>
 </body>
 </html>
