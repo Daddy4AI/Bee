@@ -356,7 +356,7 @@
 
           cell1.innerHTML = data.listIndex;
           cell2.innerHTML = data.incorrectCount > 0 ? `<span class="incorrect">${data.word}</span>` : data.word;
-          cell3.innerHTML = data.listIndex; // Corrected to show position in the wordlist
+          cell3.innerHTML = data.index + 1; // Updated to show the global position
           cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">查询</a>`;
           cell5.innerHTML = `${data.incorrectCount} / ${data.totalTests - data.incorrectCount} / ${data.totalTests}`;
         });
