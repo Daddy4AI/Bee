@@ -4,109 +4,58 @@
   <title>Word Input</title>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getDatabase, ref, get, set, update } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+    import { getDatabase, ref, get, set, update, remove } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
     import firebaseConfig from './firebaseConfig.js';
 
     const app = initializeApp(firebaseConfig);
     const database = getDatabase(app);
 
-    window.uploadWords = function() {
+    function getSelectedList() {
+      return document.getElementById('listSelector').value;
+    }
+
+    window.clearWordlist = function() {
+      const selectedList = getSelectedList();
+      const wordListRef = ref(database, selectedList);
+      remove(wordListRef).then(() => {
+        document.getElementById('status').innerText = 'Wordlist cleared successfully';
+      }).catch(error => {
+        console.error("Error clearing wordlist: ", error);
+      });
+    };
+
+    window.uploadWordsWithIndex = function() {
       const file = document.getElementById('wordFile').files[0];
       const reader = new FileReader();
+      const selectedList = getSelectedList();
 
       reader.onload = function(event) {
         const words = event.target.result.split('\n').map(word => word.trim()).filter(word => word);
-        const wordListRef = ref(database, 'wordlist');
-        get(wordListRef).then(snapshot => {
-          const data = snapshot.val() || [];
-          const progressBar = document.getElementById('progressBar');
-          progressBar.max = words.length;
+        const updates = {};
 
-          words.forEach((word, index) => {
-            setTimeout(() => {
-              data.push(word);
-              set(wordListRef, data).then(() => {
-                progressBar.value = index + 1;
-                if (index + 1 === words.length) {
-                  document.getElementById('status').innerText = 'Words uploaded successfully';
-                }
-              });
-            }, 100 * index);
-          });
+        words.forEach((word, index) => {
+          updates[`/${selectedList}/${index}`] = {
+            word: word,
+            wordlistIndex: index + 1
+          };
+        });
+
+        update(ref(database), updates).then(() => {
+          document.getElementById('status').innerText = 'Words uploaded with indices successfully';
+        }).catch(error => {
+          console.error("Error uploading words: ", error);
         });
       };
 
       reader.readAsText(file);
     };
 
-    window.addErrorWordsToReview = function() {
-      const testResultsRef = ref(database, 'testResults');
-      const wordReviewRef = ref(database, 'wordreview');
-      get(testResultsRef).then(snapshot => {
-        const testResults = snapshot.val() || {};
-        const errorWords = Object.keys(testResults).filter(word => testResults[word].incorrectCount > 0);
-        get(wordReviewRef).then(reviewSnapshot => {
-          const currentReviewWords = reviewSnapshot.val() || [];
-          const newReviewWords = [...new Set([...currentReviewWords, ...errorWords])];
-          set(wordReviewRef, newReviewWords).then(() => {
-            document.getElementById('status').innerText = 'Error words added to review list';
-          });
-        });
-      });
-    };
-
-    window.correctTestCounts = function() {
-      const testResultsRef = ref(database, 'testResults');
-      get(testResultsRef).then(snapshot => {
-        const testResults = snapshot.val() || {};
-        const updates = {};
-        Object.keys(testResults).forEach(word => {
-          if (testResults[word].incorrectCount > 0) {
-            updates[word] = {
-              correctCount: 0,
-              incorrectCount: 1,
-              totalTests: 1,
-              lastTested: testResults[word].lastTested
-            };
-          } else {
-            updates[word] = {
-              correctCount: 1,
-              incorrectCount: 0,
-              totalTests: 1,
-              lastTested: testResults[word].lastTested
-            };
-          }
-        });
-        update(testResultsRef, updates).then(() => {
-          document.getElementById('status').innerText = 'Test counts corrected successfully';
-        });
-      }).catch(error => {
-        console.error("Error correcting test counts: ", error);
-      });
-    };
-
-    window.addWordlistIndex = function() {
-      const wordListRef = ref(database, 'wordlist');
-      get(wordListRef).then(snapshot => {
-        const words = snapshot.val() || {};
-        const updates = {};
-        Object.keys(words).forEach((key, index) => {
-          updates[`/wordlist/${key}/wordlistIndex`] = index + 1;
-        });
-        update(ref(database), updates).then(() => {
-          document.getElementById('status').innerText = 'Wordlist indices added successfully';
-        });
-      }).catch(error => {
-        console.error("Error adding wordlist indices: ", error);
-      });
-    };
-
     window.retrieveWordPositions = function() {
-      const wordListRef = ref(database, 'wordlist');
+      const selectedList = getSelectedList();
+      const wordListRef = ref(database, selectedList);
       get(wordListRef).then(snapshot => {
         const words = snapshot.val() || {};
-        const output = Object.keys(words).map(key => {
-          const wordData = words[key];
+        const output = Object.values(words).map(wordData => {
           return `Word: ${wordData.word}, Position: ${wordData.wordlistIndex}`;
         }).join('<br>');
         document.getElementById('wordPositions').innerHTML = output;
@@ -129,18 +78,21 @@
   </style>
 </head>
 <body>
-  <h1>Upload Word List</h1>
+  <h1>Manage Word Lists</h1>
+  <select id="listSelector">
+    <option value="wordlist1">Word List 1</option>
+    <option value="wordlist2">Word List 2</option>
+    <!-- Add more options as needed -->
+  </select>
+  <br><br>
   <input type="file" id="wordFile" accept=".txt">
-  <button onclick="uploadWords()">Upload</button>
+  <button onclick="uploadWordsWithIndex()">Upload Words with Index</button>
   <br><br>
-  <button onclick="addErrorWordsToReview()">Add Error Words</button>
-  <br><br>
-  <button onclick="correctTestCounts()">Correct Test Counts</button>
-  <br><br>
-  <button onclick="addWordlistIndex()">Add Wordlist Index</button>
+  <button onclick="clearWordlist()">Clear Wordlist</button>
   <br><br>
   <button onclick="retrieveWordPositions()">Retrieve Word Positions</button>
-  <progress id="progressBar" value="0" max="100"></progress>
   <p id="status"></p>
   <div id="wordPositions"></div>
-  <div id="version">Version 002</
+  <div id="version">Version 100</div>
+</body>
+</html>
