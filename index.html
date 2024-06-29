@@ -333,13 +333,13 @@
       Promise.all(groupWords.map((word, index) => {
         return get(child(testResultsRef, word)).then(resultSnapshot => {
           const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
-          return { word, index: index + 1, ...resultData };
+          return { word, listIndex: index + 1, ...resultData };
         });
       })).then(wordData => {
         wordData.sort((a, b) => {
           if (a.totalTests === b.totalTests) {
             if (a.incorrectCount === b.incorrectCount) {
-              return a.index - b.index;
+              return a.listIndex - b.listIndex;
             }
             return b.incorrectCount - a.incorrectCount;
           }
@@ -354,9 +354,9 @@
           const cell4 = row.insertCell(3);
           const cell5 = row.insertCell(4);
 
-          cell1.innerHTML = data.index;
+          cell1.innerHTML = data.listIndex;
           cell2.innerHTML = data.incorrectCount > 0 ? `<span class="incorrect">${data.word}</span>` : data.word;
-          cell3.innerHTML = data.index;
+          cell3.innerHTML = data.listIndex; // Corrected to show position in the wordlist
           cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">查询</a>`;
           cell5.innerHTML = `${data.incorrectCount} / ${data.totalTests - data.incorrectCount} / ${data.totalTests}`;
         });
