@@ -32,6 +32,7 @@
             autocorrect: off;
             spellcheck: false;
             margin-top: 20px;
+            width: 50%;
         }
         button {
             font-size: 30px;
@@ -58,6 +59,7 @@
             margin-top: 10px;
             font-size: 24px;
             color: darkgreen;
+            width: 66.67%;
         }
         #groupStats {
             font-size: 20px;
@@ -439,8 +441,8 @@
 <body>
     <h1>Spelling Test - Group <span id="groupNumber"></span></h1>
     <p id="wordNumber"></p>
-    <p id="wordDefinition"></p> <!-- Definition will be displayed here -->
     <button id="playWordButton" onclick="displayWord()">Play Word</button>
+    <p id="wordDefinition"></p> <!-- Definition will be displayed here -->
     <input type="text" id="spellingInput" autocomplete="off" autocorrect="off" spellcheck="false">
     <p id="result"></p>
     <p id="exampleSentence"></p>
