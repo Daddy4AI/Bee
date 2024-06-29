@@ -330,44 +330,45 @@
     };
 
     function populateWordListTable(groupWords, testResultsRef, wordListTable) {
-      Promise.all(groupWords.map((word, index) => {
-        return get(child(testResultsRef, word)).then(resultSnapshot => {
-          const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
-          return { word, listIndex: index + 1, ...resultData };
-        });
-      })).then(wordData => {
-        wordData.sort((a, b) => {
-          if (a.totalTests === b.totalTests) {
-            if (a.incorrectCount === b.incorrectCount) {
-              return a.listIndex - b.listIndex;
-            }
-            return b.incorrectCount - a.incorrectCount;
-          }
-          return a.totalTests - b.totalTests;
-        });
+  Promise.all(groupWords.map((word, index) => {
+    return get(child(testResultsRef, word)).then(resultSnapshot => {
+      const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
+      const wordIndex = words.indexOf(word) + 1; // Position in the entire wordlist
+      return { word, groupPosition: index + 1, listIndex: wordIndex, ...resultData };
+    });
+  })).then(wordData => {
+    wordData.sort((a, b) => {
+      if (a.totalTests === b.totalTests) {
+        if (a.incorrectCount === b.incorrectCount) {
+          return a.listIndex - b.listIndex;
+        }
+        return b.incorrectCount - a.incorrectCount;
+      }
+      return a.totalTests - b.totalTests;
+    });
 
-        wordData.forEach(data => {
-          const row = wordListTable.insertRow();
-          const cell1 = row.insertCell(0);
-          const cell2 = row.insertCell(1);
-          const cell3 = row.insertCell(2);
-          const cell4 = row.insertCell(3);
-          const cell5 = row.insertCell(4);
+    wordData.forEach(data => {
+      const row = wordListTable.insertRow();
+      const cell1 = row.insertCell(0);
+      const cell2 = row.insertCell(1);
+      const cell3 = row.insertCell(2);
+      const cell4 = row.insertCell(3);
+      const cell5 = row.insertCell(4);
 
-          cell1.innerHTML = data.listIndex;
-          cell2.innerHTML = data.incorrectCount > 0 ? `<span class="incorrect">${data.word}</span>` : data.word;
-          cell3.innerHTML = data.listIndex; // Corrected to show position in the wordlist
-          cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">查询</a>`;
-          cell5.innerHTML = `${data.incorrectCount} / ${data.totalTests - data.incorrectCount} / ${data.totalTests}`;
-        });
+      cell1.innerHTML = data.groupPosition; // Position within the group
+      cell2.innerHTML = data.incorrectCount > 0 ? `<span class="incorrect">${data.word}</span>` : data.word;
+      cell3.innerHTML = data.listIndex; // Position in the entire wordlist
+      cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">查询</a>`;
+      cell5.innerHTML = `${data.incorrectCount} / ${data.totalTests - data.incorrectCount} / ${data.totalTests}`;
+    });
 
-        const closeRow = wordListTable.insertRow();
-        const closeCell = closeRow.insertCell(0);
-        closeCell.colSpan = 5;
-        closeCell.innerHTML = '<button onclick="closeModal()">Close</button>';
-        closeCell.style.textAlign = 'center';
-      });
-    }
+    const closeRow = wordListTable.insertRow();
+    const closeCell = closeRow.insertCell(0);
+    closeCell.colSpan = 5;
+    closeCell.innerHTML = '<button onclick="closeModal()">Close</button>';
+    closeCell.style.textAlign = 'center';
+  });
+}
 
     window.closeModal = function() {
       document.getElementById('wordListModal').style.display = 'none';
