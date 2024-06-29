@@ -159,18 +159,17 @@
                     return { word, index: originalIndex, ...resultData };
                 });
             })).then(wordData => {
-                words = wordData.sort((a, b) => {
-                    if (a.totalTests === 0 && b.totalTests === 0) {
-                        return a.index - b.index;
+                wordData.sort((a, b) => {
+                    if (a.totalTests === b.totalTests) {
+                        if (a.incorrectCount === b.incorrectCount) {
+                          if (a.index === b.index) {
+                            return new Date(a.lastTested) - new Date(b.lastTested);
+                          }
+                          return a.index - b.index;
+                        }
+                        return b.incorrectCount - a.incorrectCount;
                     }
-                    if (a.totalTests === 0) return -1;
-                    if (b.totalTests === 0) return 1;
-                    if (a.incorrectCount > 0 && b.incorrectCount > 0) {
-                        return new Date(a.lastTested) - new Date(b.lastTested);
-                    }
-                    if (a.incorrectCount > 0) return -1;
-                    if (b.incorrectCount > 0) return 1;
-                    return new Date(a.lastTested) - new Date(b.lastTested);
+                    return a.totalTests - b.totalTests;
                 });
 
                 const testedWords = words.filter(w => w.totalTests > 0).length;
@@ -442,7 +441,7 @@
     <h1>Spelling Test - Group <span id="groupNumber"></span></h1>
     <p id="wordNumber"></p>
     <button id="playWordButton" onclick="displayWord()">Play Word</button>
-    <p id="wordDefinition"></p> <!-- Definition will be displayed here -->
+    <p id="wordDefinition"></p>
     <input type="text" id="spellingInput" autocomplete="off" autocorrect="off" spellcheck="false">
     <p id="result"></p>
     <p id="exampleSentence"></p>
@@ -451,6 +450,6 @@
         <p>恭喜你完成这组单词的第一次测试！</p>
         <button onclick="window.location.href='index.html'">返回首页</button>
     </div>
-    <div id="version">Voice from Merriam-Webster</div>
+    <div id="version">Voice from Merriam-Webster01</div>
 </body>
 </html>
