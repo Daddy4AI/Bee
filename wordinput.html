@@ -4,7 +4,7 @@
   <title>Manage Word Lists</title>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getDatabase, ref, get, set, update, remove } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+    import { getDatabase, ref, get, update, remove } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
     import firebaseConfig from './firebaseConfig.js';
 
     const app = initializeApp(firebaseConfig);
@@ -41,7 +41,7 @@
       });
     };
 
-    window.uploadWordsWithIndex = function() {
+    window.uploadWords = function() {
       const file = document.getElementById('wordFile').files[0];
       const reader = new FileReader();
       const selectedList = getSelectedList();
@@ -51,14 +51,11 @@
         const updates = {};
 
         words.forEach((word, index) => {
-          updates[`/${selectedList}/${index}`] = {
-            word: word,
-            wordlistIndex: index + 1
-          };
+          updates[`/${selectedList}/${index}`] = word;
         });
 
         update(ref(database), updates).then(() => {
-          document.getElementById('status').innerText = 'Words uploaded with indices successfully';
+          document.getElementById('status').innerText = 'Words uploaded successfully';
         }).catch(error => {
           console.error("Error uploading words: ", error);
         });
@@ -67,17 +64,17 @@
       reader.readAsText(file);
     };
 
-    window.retrieveWordPositions = function() {
+    window.retrieveWordList = function() {
       const selectedList = getSelectedList();
       const wordListRef = ref(database, selectedList);
       get(wordListRef).then(snapshot => {
         const words = snapshot.val() || {};
-        const output = Object.values(words).map(wordData => {
-          return `Word: ${wordData.word}, Position: ${wordData.wordlistIndex}`;
+        const output = Object.values(words).map((word, index) => {
+          return `Word ${index + 1}: ${word}`;
         }).join('<br>');
-        document.getElementById('wordPositions').innerHTML = output;
+        document.getElementById('wordListDisplay').innerHTML = output;
       }).catch(error => {
-        console.error("Error retrieving word positions: ", error);
+        console.error("Error retrieving word list: ", error);
       });
     };
 
@@ -103,13 +100,13 @@
   </select>
   <br><br>
   <input type="file" id="wordFile" accept=".txt">
-  <button onclick="uploadWordsWithIndex()">Upload Words with Index</button>
+  <button onclick="uploadWords()">Upload Words</button>
   <br><br>
   <button onclick="clearWordlist()">Clear Wordlist</button>
   <br><br>
-  <button onclick="retrieveWordPositions()">Retrieve Word Positions</button>
+  <button onclick="retrieveWordList()">Retrieve Word List</button>
   <p id="status"></p>
-  <div id="wordPositions"></div>
-  <div id="version">Version 120</div>
+  <div id="wordListDisplay"></div>
+  <div id="version">Version 001</div>
 </body>
 </html>
