@@ -90,16 +90,22 @@
       get(wordListRef).then(snapshot => {
         const words = snapshot.val() || [];
         const updates = {};
+
         words.forEach((word, index) => {
-          updates[word] = { wordlistIndex: index + 1 };
+          updates[`/wordlist/${index}`] = {
+            word: word,
+            wordlistIndex: index + 1
+          };
         });
-        update(wordListRef, updates).then(() => {
+
+        update(ref(database), updates).then(() => {
           document.getElementById('status').innerText = 'Wordlist indices added successfully';
         });
       }).catch(error => {
         console.error("Error adding wordlist indices: ", error);
       });
     };
+
   </script>
   <style>
     body {
