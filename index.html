@@ -24,7 +24,7 @@
       color: black;
     }
     .groups-container {
-      display: none;
+      display: none; /* Hide the groups container initially */
       flex-wrap: wrap;
       justify-content: space-around;
       margin-top: 20px;
@@ -117,13 +117,6 @@
     .incorrect {
       color: red;
     }
-    #version {
-      text-align: right;
-      margin-top: 20px;
-      margin-right: 20px;
-      font-size: 14px;
-      color: #666;
-    }
   </style>
   <script type="module">
     import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
@@ -158,19 +151,6 @@
               return { word, ...resultData };
             });
           })).then(wordData => {
-            wordData.sort((a, b) => {
-              if (a.totalTests === b.totalTests) {
-                if (a.incorrectCount === b.incorrectCount) {
-                  if (a.index === b.index) {
-                    return new Date(a.lastTested) - new Date(b.lastTested);
-                  }
-                  return a.index - b.index;
-                }
-                return b.incorrectCount - a.incorrectCount;
-              }
-              return a.totalTests - b.totalTests;
-            });
-
             const testedWords = wordData.filter(w => w.totalTests > 0).length;
             const incorrectWords = wordData.filter(w => w.incorrectCount > 0).length;
             const lastTested = wordData.reduce((latest, w) => {
@@ -206,19 +186,6 @@
                 return { word, ...resultData };
               });
             })).then(wordData => {
-              wordData.sort((a, b) => {
-                if (a.totalTests === b.totalTests) {
-                  if (a.incorrectCount === b.incorrectCount) {
-                    if (a.index === b.index) {
-                      return new Date(a.lastTested) - new Date(b.lastTested);
-                    }
-                    return a.index - b.index;
-                  }
-                  return b.incorrectCount - a.incorrectCount;
-                }
-                return a.totalTests - b.totalTests;
-              });
-
               const testedWords = wordData.filter(w => w.totalTests > 0).length;
               const incorrectWords = wordData.filter(w => w.incorrectCount > 0).length;
               const lastTested = wordData.reduce((latest, w) => {
@@ -308,7 +275,7 @@
     window.viewWords = function(groupNumber) {
       const wordListModal = document.getElementById('wordListModal');
       const wordListTable = document.getElementById('wordListTable');
-      wordListTable.innerHTML = '<tr><th>顺序</th><th>单词</th><th>序号</th><th>查询</th><th>次数</th></tr>';
+      wordListTable.innerHTML = '<tr><th>序列号</th><th>单词</th><th>Dictionary</th><th>测试总数</th></tr>';
 
       const wordListRef = ref(database, 'wordlist');
       const testResultsRef = ref(database, 'testResults');
@@ -333,42 +300,28 @@
       Promise.all(groupWords.map((word, index) => {
         return get(child(testResultsRef, word)).then(resultSnapshot => {
           const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
-          return { word, listIndex: index + 1, ...resultData };
+          return { word, index: index + 1, ...resultData };
         });
       })).then(wordData => {
-        wordData.sort((a, b) => {
-          if (a.totalTests === b.totalTests) {
-            if (a.incorrectCount === b.incorrectCount) {
-              return a.listIndex - b.listIndex;
-            }
-            return b.incorrectCount - a.incorrectCount;
-          }
-          return a.totalTests - b.totalTests;
-        });
-
         wordData.forEach(data => {
           const row = wordListTable.insertRow();
           const cell1 = row.insertCell(0);
           const cell2 = row.insertCell(1);
           const cell3 = row.insertCell(2);
           const cell4 = row.insertCell(3);
-          const cell5 = row.insertCell(4);
-
-          cell1.innerHTML = data.listIndex;
+          cell1.innerHTML = data.index;
           cell2.innerHTML = data.incorrectCount > 0 ? `<span class="incorrect">${data.word}</span>` : data.word;
-          cell3.innerHTML = data.index + 1; // Updated to show the global position
-          cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">查询</a>`;
-          cell5.innerHTML = `${data.incorrectCount} / ${data.totalTests - data.incorrectCount} / ${data.totalTests}`;
+          cell3.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">Dictionary</a>`;
+          cell4.innerHTML = data.totalTests;
         });
 
         const closeRow = wordListTable.insertRow();
         const closeCell = closeRow.insertCell(0);
-        closeCell.colSpan = 5;
+        closeCell.colSpan = 4;
         closeCell.innerHTML = '<button onclick="closeModal()">Close</button>';
         closeCell.style.textAlign = 'center';
       });
     }
-
 
     window.closeModal = function() {
       document.getElementById('wordListModal').style.display = 'none';
@@ -396,7 +349,5 @@
       <table id="wordListTable" class="word-list-table"></table>
     </div>
   </div>
-
-  <div id="version">release v0.95</div>
 </body>
 </html>

@@ -90,12 +90,14 @@
       get(wordListRef).then(snapshot => {
         const words = snapshot.val() || [];
         const updates = {};
+
         words.forEach((word, index) => {
           updates[`/wordlist/${index}`] = {
             word: word,
             wordlistIndex: index + 1
           };
         });
+
         update(ref(database), updates).then(() => {
           document.getElementById('status').innerText = 'Wordlist indices added successfully';
         });
@@ -104,16 +106,6 @@
       });
     };
 
-    window.retrieveWordPositions = function() {
-      const wordListRef = ref(database, 'wordlist');
-      get(wordListRef).then(snapshot => {
-        const words = snapshot.val() || [];
-        const output = words.map(wordData => `Word: ${wordData.word}, Position: ${wordData.wordlistIndex}`).join('<br>');
-        document.getElementById('wordPositions').innerHTML = output;
-      }).catch(error => {
-        console.error("Error retrieving word positions: ", error);
-      });
-    };
   </script>
   <style>
     body {
@@ -138,11 +130,8 @@
   <button onclick="correctTestCounts()">Correct Test Counts</button>
   <br><br>
   <button onclick="addWordlistIndex()">Add Wordlist Index</button>
-  <br><br>
-  <button onclick="retrieveWordPositions()">Retrieve Word Positions</button>
   <progress id="progressBar" value="0" max="100"></progress>
   <p id="status"></p>
-  <div id="wordPositions"></div>
-  <div id="version">Version 001</div>
+  <div id="version">Version 003</div>
 </body>
 </html>
