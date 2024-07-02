@@ -37,7 +37,7 @@
         button {
             font-size: 30px;
             padding: 10px 20px;
-            margin-top: 20px;
+            margin: 10px;
         }
         #result.correct {
             color: green;
@@ -96,6 +96,12 @@
             font-size: 16px;
             color: black;
         }
+        .rate-adjustment {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 10px;
+        }
     </style>
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
@@ -112,6 +118,10 @@
         let groupNumber = null;
 
         const apiKey = '4c841aa5-4903-4de1-80d6-b81c397935a9';
+
+        // Initial rates
+        let synthesisRate = 0.6;
+        let mp3Rate = 0.8;
 
         document.addEventListener('DOMContentLoaded', function() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -145,6 +155,15 @@
                 }
             }).catch(error => {
                 console.error("Error getting data: ", error);
+            });
+
+            // Set up event listeners for rate adjustment
+            document.getElementById('synthesisRate').addEventListener('change', function(event) {
+                synthesisRate = parseFloat(event.target.value);
+            });
+
+            document.getElementById('mp3Rate').addEventListener('change', function(event) {
+                mp3Rate = parseFloat(event.target.value);
             });
         });
 
@@ -240,7 +259,7 @@
         async function playWord(word) {
             const utterance = new SpeechSynthesisUtterance(word);
             utterance.lang = 'en-US';
-            utterance.rate = 0.6;
+            utterance.rate = synthesisRate;
             window.speechSynthesis.speak(utterance);
         }
 
@@ -249,6 +268,7 @@
             const audioUrl = await getAudioUrl(word);
             if (audioUrl) {
                 const audio = new Audio(audioUrl);
+                audio.playbackRate = mp3Rate;
                 audio.play();
             }
         }
@@ -293,7 +313,7 @@
                     }
 
                     if (currentWordIndex < words.length) {
-                        setTimeout(displayWord, 2000);
+                        setTimeout(displayWord, 3000);
                     } else {
                         saveIncorrectWords();
                         checkIfAllTestsCompleted();
@@ -446,9 +466,23 @@
 <body>
     <h1>Spelling Test - Group <span id="groupNumber"></span></h1>
     <p id="wordNumber"></p>
-    <div style="display: flex; align-items: center; justify-content: center;">
+    <div class="rate-adjustment">
+        <label for="synthesisRate">Synthesis Rate:</label>
+        <select id="synthesisRate">
+            <option value="0.8">Fast</option>
+            <option value="0.6" selected>Slow</option>
+            <option value="0.4">Slower</option>
+        </select>
         <button id="playWordButton" onclick="displayWord()">Play Word</button>
+    </div>
+    <div class="rate-adjustment">
         <button id="playMerriamWebsterVoiceButton" onclick="playMerriamWebsterVoice()">Dictionary Voice</button>
+        <label for="mp3Rate">MP3 Rate:</label>
+        <select id="mp3Rate">
+            <option value="1.0">Fast</option>
+            <option value="0.8" selected>Slow</option>
+            <option value="0.6">Slower</option>
+        </select>
     </div>
     <p id="wordDefinition"></p> <!-- Definition will be displayed here -->
     <input type="text" id="spellingInput" autocomplete="off" autocorrect="off" spellcheck="false">
@@ -459,6 +493,6 @@
         <p>恭喜你完成这组单词的第一次测试！</p>
         <button onclick="window.location.href='index.html'">返回首页</button>
     </div>
-    <div id="version">Voice from Merriam-Webster001</div>
+    <div id="version">Voice from Merriam-Webster00001</div>
 </body>
 </html>
