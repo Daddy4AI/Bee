@@ -100,6 +100,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 70%;
             margin-top: 10px;
         }
         .rate-adjustment label {
@@ -166,12 +167,10 @@
             // Set up event listeners for rate adjustment
             document.getElementById('synthesisRateSlider').addEventListener('input', function(event) {
                 synthesisRate = parseFloat(event.target.value);
-                document.getElementById('synthesisRateValue').innerText = synthesisRate;
             });
 
             document.getElementById('mp3RateSlider').addEventListener('input', function(event) {
                 mp3Rate = parseFloat(event.target.value);
-                document.getElementById('mp3RateValue').innerText = mp3Rate;
             });
         });
 
@@ -475,16 +474,14 @@
     <h1>Spelling Test - Group <span id="groupNumber"></span></h1>
     <p id="wordNumber"></p>
     <div class="rate-adjustment">
-        <button id="playWordButton" onclick="displayWord()">Play Word</button>
         <label for="synthesisRateSlider">Rate:</label>
         <input type="range" id="synthesisRateSlider" min="0.3" max="0.7" step="0.1" value="0.5">
-        <span id="synthesisRateValue">0.5</span>
+        <button id="playWordButton" onclick="displayWord()">Play Word</button>
     </div>
     <div class="rate-adjustment">
         <button id="playMerriamWebsterVoiceButton" onclick="playMerriamWebsterVoice()">Dictionary Voice</button>
         <label for="mp3RateSlider">Rate:</label>
         <input type="range" id="mp3RateSlider" min="0.5" max="0.9" step="0.1" value="0.7">
-        <span id="mp3RateValue">0.7</span>
     </div>
     <p id="wordDefinition"></p> <!-- Definition will be displayed here -->
     <input type="text" id="spellingInput" autocomplete="off" autocorrect="off" spellcheck="false">
@@ -495,6 +492,6 @@
         <p>恭喜你完成这组单词的第一次测试！</p>
         <button onclick="window.location.href='index.html'">返回首页</button>
     </div>
-    <div id="version">Voice from Merriam-Webster</div>
+    <div id="version">Voice from Merriam-Webster0.1</div>
 </body>
 </html>
