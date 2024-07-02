@@ -238,13 +238,17 @@
         }
 
         async function playWord(word) {
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.6;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        async function playMerriamWebsterVoice(word) {
             const audioUrl = await getAudioUrl(word);
             if (audioUrl) {
                 const audio = new Audio(audioUrl);
                 audio.play();
-            } else {
-                const utterance = new SpeechSynthesisUtterance(word);
-                window.speechSynthesis.speak(utterance);
             }
         }
 
@@ -442,6 +446,7 @@
     <h1>Spelling Test - Group <span id="groupNumber"></span></h1>
     <p id="wordNumber"></p>
     <button id="playWordButton" onclick="displayWord()">Play Word</button>
+    <button id="playMerriamWebsterVoiceButton" onclick="playMerriamWebsterVoice()">Merriam-Webster Voice</button>
     <p id="wordDefinition"></p> <!-- Definition will be displayed here -->
     <input type="text" id="spellingInput" autocomplete="off" autocorrect="off" spellcheck="false">
     <p id="result"></p>
