@@ -1,8 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Spelling Test - Group #</title>
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <title>Spelling Bee</title>
     <style>
         body {
             display: flex;
@@ -23,16 +22,15 @@
         }
 
         #controls {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 70%;
-          margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 70%;
+            margin-top: 10px;
         }
         #controls label, #controls input, #controls button {
-          margin: 0 10px;
+            margin: 0 10px;
         }
-
 
         #wordNumber {
             margin: 20px 0;
@@ -135,7 +133,6 @@
         let todayTestedCount = 0;
         const testedWordsToday = new Set();
         const incorrectWordsSet = new Set();
-        let groupNumber = null;
 
         const apiKey = '4c841aa5-4903-4de1-80d6-b81c397935a9';
 
@@ -144,38 +141,12 @@
         let mp3Rate = 0.7;
 
         document.addEventListener('DOMContentLoaded', function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const group = urlParams.get('group');
-            if (group === 'Review') {
-                groupNumber = 'Review';
-                document.title = `Spelling Test - Group Review`;
-                document.getElementById('groupNumber').innerText = 'Review';
+            const wordsToShow = JSON.parse(localStorage.getItem('wordsToShow'));
+            if (wordsToShow) {
+                loadWords(wordsToShow);
             } else {
-                groupNumber = parseInt(group);
-                document.title = `Spelling Test - Group ${groupNumber}`;
-                document.getElementById('groupNumber').innerText = groupNumber;
+                fetchWords();
             }
-            const wordListRef = ref(database, 'wordlist');
-            const testResultsRef = ref(database, 'testResults');
-            const wordReviewRef = ref(database, 'wordreview');
-            const todayDate = new Date().toISOString().split('T')[0];
-
-            get(wordListRef).then(snapshot => {
-                const allWords = snapshot.val() || [];
-                let groupWords;
-
-                if (groupNumber === 'Review') {
-                    get(wordReviewRef).then(reviewSnapshot => {
-                        groupWords = reviewSnapshot.val() || [];
-                        loadWords(groupWords, testResultsRef, todayDate, allWords);
-                    });
-                } else {
-                    groupWords = allWords.slice((groupNumber - 1) * 100, groupNumber * 100);
-                    loadWords(groupWords, testResultsRef, todayDate, allWords);
-                }
-            }).catch(error => {
-                console.error("Error getting data: ", error);
-            });
 
             // Set up event listeners for rate adjustment
             document.getElementById('synthesisRateSlider').addEventListener('input', function(event) {
@@ -187,47 +158,34 @@
             });
         });
 
-        function loadWords(groupWords, testResultsRef, todayDate, allWords) {
-            Promise.all(groupWords.map((word, index) => {
-                return get(child(testResultsRef, word)).then(resultSnapshot => {
-                    const resultData = resultSnapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0, lastTested: null };
-                    if (resultData.lastTested && resultData.lastTested.startsWith(todayDate)) {
-                        testedWordsToday.add(word);
-                    }
-                    const originalIndex = allWords.indexOf(word);
-                    return { word, index: originalIndex, ...resultData };
+        async function fetchWords() {
+            const wordListRef = ref(database, 'wordlist');
+            const testResultsRef = ref(database, 'testResults');
+            const wordReviewRef = ref(database, 'wordreview');
+            const todayDate = new Date().toISOString().split('T')[0];
+
+            get(wordListRef).then(snapshot => {
+                const allWords = snapshot.val() || [];
+                let groupWords;
+
+                get(wordReviewRef).then(reviewSnapshot => {
+                    groupWords = reviewSnapshot.val() || [];
+                    loadWords(groupWords, testResultsRef, todayDate, allWords);
                 });
-            })).then(wordData => {
-                words = wordData.sort((a, b) => {
-                    if (a.totalTests === 0 && b.totalTests === 0) {
-                        return a.index - b.index;
-                    }
-                    if (a.totalTests === 0) return -1;
-                    if (b.totalTests === 0) return 1;
-                    if (a.incorrectCount > 0 && b.incorrectCount > 0) {
-                        return new Date(a.lastTested) - new Date(b.lastTested);
-                    }
-                    if (a.incorrectCount > 0) return -1;
-                    if (b.incorrectCount > 0) return 1;
-                    return new Date(a.lastTested) - new Date(b.lastTested);
-                });
-
-                const testedWords = words.filter(w => w.totalTests > 0).length;
-                const notTestedWords = words.length - testedWords;
-                const lastTested = words.reduce((latest, w) => {
-                    if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
-                        return w.lastTested;
-                    }
-                    return latest;
-                }, null);
-
-                todayTestedCount = testedWordsToday.size;
-
-                const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : 'N/A';
-
-                updateGroupStats(testedWords, notTestedWords, todayTestedCount, lastTestedFormatted);
-                displayWord();
+            }).catch(error => {
+                console.error("Error getting data: ", error);
             });
+        }
+
+        function loadWords(sortedWords) {
+            words = sortedWords;
+            const testedWords = words.filter(w => w.totalTests > 0).length;
+            const notTestedWords = words.length - testedWords;
+
+            todayTestedCount = testedWordsToday.size;
+
+            updateGroupStats(testedWords, notTestedWords);
+            displayWord();
         }
 
         async function getDefinition(word) {
@@ -296,11 +254,11 @@
         window.displayWord = async function() {
             if (words.length === 0) return;
             const word = words[currentWordIndex].word;
-            const wordIndex = words[currentWordIndex].index + 1;
-            const groupRelativeIndex = groupNumber === 'Review' ? wordIndex : wordIndex - (groupNumber - 1) * 100;
+            const wordIndex = currentWordIndex + 1 + todayTestedCount;
+            const groupRelativeIndex = wordIndex;
 
             playWord(word);
-            document.getElementById('wordNumber').innerText = `单词序列号: ${groupRelativeIndex} out of ${words.length} words`;
+            document.getElementById('wordNumber').innerText = `单词序列号: ${groupRelativeIndex} out of ${words.length + todayTestedCount} words`;
             document.getElementById('spellingInput').value = '';
             document.getElementById('spellingInput').focus();
             document.getElementById('result').innerText = '';
@@ -317,7 +275,6 @@
             const resultElement = document.getElementById('result');
             const playWordButton = document.getElementById('playWordButton');
             const now = new Date().toISOString();
-            const todayDate = now.split('T')[0];
 
             if (input === word) {
                 resultElement.innerText = '正确';
@@ -333,10 +290,13 @@
                     }
 
                     if (currentWordIndex < words.length) {
-                        setTimeout(displayWord, 3000);
+                        setTimeout(() => {
+                            displayWord();
+                            playWord(words[currentWordIndex].word);
+                        }, 3000);
                     } else {
                         saveIncorrectWords();
-                        checkIfAllTestsCompleted();
+                        showCompletionMessage();
                     }
                 });
             } else {
@@ -350,25 +310,17 @@
             }
         };
 
-        function checkIfAllTestsCompleted() {
-            const totalTestsSet = new Set(words.map(word => word.totalTests));
-            if (totalTestsSet.size === 1) {
-                const totalTests = [...totalTestsSet][0];
-                showCompletionMessage(totalTests);
-            }
+        function showCompletionMessage() {
+            const msgBox = document.getElementById('msgBox');
+            msgBox.innerHTML = `<p>恭喜你完成这组单词的测试！</p>
+                                <button onclick="window.location.href='index.html'">返回首页</button>`;
+            msgBox.style.display = 'block';
         }
 
         function updateGroupStatsAfterSave() {
             const testedWords = words.filter(w => w.totalTests > 0).length;
             const notTestedWords = words.length - testedWords;
-            const lastTested = words.reduce((latest, w) => {
-                if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
-                    return w.lastTested;
-                }
-                return latest;
-            }, null);
-            const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : 'N/A';
-            updateGroupStats(testedWords, notTestedWords, todayTestedCount, lastTestedFormatted);
+            updateGroupStats(testedWords, notTestedWords);
         }
 
         window.retryWord = function() {
@@ -381,7 +333,7 @@
             document.getElementById('playWordButton').innerText = 'Play Word';
         };
 
-        window.updateGroupStats = function(testedWords, notTestedWords, todayTestedCount, lastTestedFormatted) {
+        window.updateGroupStats = function(testedWords, notTestedWords) {
             const totalTestsMap = new Map();
             words.forEach(word => {
                 if (totalTestsMap.has(word.totalTests)) {
@@ -408,16 +360,7 @@
                         ${tableRows.join('')}
                     </tbody>
                 </table>
-                <p>今天测试单词数: ${todayTestedCount}</p>
-                <p>最后测试时间: ${lastTestedFormatted}</p>
             `;
-        };
-
-        window.showCompletionMessage = function(totalTests) {
-            const msgBox = document.getElementById('msgBox');
-            msgBox.innerHTML = `<p>恭喜你完成这组单词的第${totalTests}次测试！</p>
-                                <button onclick="window.location.href='index.html'">返回首页</button>`;
-            msgBox.style.display = 'block';
         };
 
         window.saveIncorrectWords = function() {
@@ -484,18 +427,17 @@
     </script>
 </head>
 <body>
-    <h1>Spelling Test - Group <span id="groupNumber"></span></h1>
-    <p id="wordNumber"></p>
+    <h1>Spelling Bee</h1>
+    <p id="wordNumber">单词序列号: NaN out of 50 words</p>
 
-<div id="controls">
-    <label for="synthesisRateSlider">Rate:</label>
-    <input type="range" id="synthesisRateSlider" min="0.3" max="0.7" step="0.1" value="0.5">
-    <button id="playWordButton" onclick="displayWord()">Play Word</button>
-    <button id="playMerriamWebsterVoiceButton" onclick="playMerriamWebsterVoice()">Dictionary Voice</button>
-    <label for="mp3RateSlider">Rate:</label>
-    <input type="range" id="mp3RateSlider" min="0.5" max="0.9" step="0.1" value="0.7">
-</div>
-
+    <div id="controls">
+        <label for="synthesisRateSlider">Rate:</label>
+        <input type="range" id="synthesisRateSlider" min="0.3" max="0.7" step="0.1" value="0.5">
+        <button id="playWordButton" onclick="displayWord()">Play Word</button>
+        <button id="playMerriamWebsterVoiceButton" onclick="playMerriamWebsterVoice()">Dictionary Voice</button>
+        <label for="mp3RateSlider">Rate:</label>
+        <input type="range" id="mp3RateSlider" min="0.5" max="0.9" step="0.1" value="0.7">
+    </div>
 
     <p id="wordDefinition"></p> <!-- Definition will be displayed here -->
     <input type="text" id="spellingInput" autocomplete="off" autocorrect="off" spellcheck="false">
@@ -503,7 +445,7 @@
     <p id="exampleSentence"></p>
     <div id="groupStats"></div>
     <div id="msgBox">
-        <p>恭喜你完成这组单词的第一次测试！</p>
+        <p>恭喜你完成这组单词的测试！</p>
         <button onclick="window.location.href='index.html'">返回首页</button>
     </div>
     <div id="version">Voice from Merriam-Webster0.2</div>

@@ -1,353 +1,488 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Zoe Vocabulary List</title>
-  <style>
+    <title>Zoe's Vocabulary Exercise</title>
+    <style>
+
     body {
       background: url('pics/backgd05.jpg') no-repeat center center fixed;
       background-size: cover;
       font-family: Arial, sans-serif;
     }
-    .cover-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      text-align: center;
-      background: url('pics/cover.jpg') no-repeat center center fixed;
-      background-size: cover;
-      cursor: pointer;
+    #cover {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: url('pics/cover.jpg') no-repeat center center fixed;
+        background-size: cover;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: black;
+        font-size: 60px;
+        text-align: center;
+        z-index: 10;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .cover-container h1 {
-      font-size: 42px;
-      color: black;
+    #mainContent {
+        display: none;
+        padding: 20px;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .groups-container {
-      display: none; /* Hide the groups container initially */
-      flex-wrap: wrap;
-      justify-content: space-around;
-      margin-top: 20px;
+    h1, h2 {
+        text-align: center;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .group {
-      border: 2px solid;
-      padding: 20px;
-      margin: 10px;
-      flex: 1 1 21%;
-      box-sizing: border-box;
-      background-color: rgba(255, 255, 255, 0.8);
+    table {
+        width: 66.67%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        margin-left: auto;
+        margin-right: auto;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .tested {
-      border-color: lightblue;
+    th, td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .not-tested {
-      border-color: lightgreen;
+    th {
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    h1 {
-      text-align: center;
-      margin-top: 20px;
-      color: #333;
+    #loading {
+        text-align: center;
+        font-size: 20px;
+        margin-top: 20px;
+        color: white;
+        background-color: navy;
+        padding: 10px;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    h2 {
-      margin-top: 0;
+    .button-container, .stats-container {
+        text-align: center;
+        margin-top: 20px;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    button {
-      font-size: 16px;
-      padding: 10px;
+    button, select {
+        font-size: 16px;
+        padding: 10px 20px;
+        margin: 5px;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .progress-bar {
-      width: 100%;
-      background-color: #f3f3f3;
-      border: 1px solid #ccc;
-      height: 20px;
-      margin-top: 5px;
+    #taskTable th, #taskTable td {
+        width: 25%;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .progress {
-      height: 100%;
+    #wordTable th:nth-child(2), #wordTable td:nth-child(2) {
+        width: 40%;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .blue {
-      background-color: blue;
+    #wordTable th:nth-child(1), #wordTable th:nth.child(3), #wordTable th:nth.child(4),
+    #wordTable td:nth.child(1), #wordTable td:nth.child(3), #wordTable td:nth.child(4) {
+        width: 20%;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .red {
-      background-color: red;
+    #progressReviewTable th:nth.child(1), #progressReviewTable td:nth.child(1),
+    #testDatesTable th:nth.child(1), #testDatesTable td:nth.child(1) {
+        width: 40%;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 50%;
-      top: 50%;
-      width: 50%;
-      height: 50%;
-      overflow: auto;
-      background-color: white;
-      border: 2px solid #888;
-      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
-      transform: translate(-50%, -50%);
-      padding: 20px;
+    #progressReviewTable th:nth.child(2), #progressReviewTable td:nth.child(2),
+    #testDatesTable th:nth.child(2), #testDatesTable td:nth.child(2) {
+        width: 60%;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .modal-content {
-      margin: 15px 0;
+    #testedWordsTable {
+        width: 80%;
+        margin-top: 20px;
+        border-collapse: collapse;
+        margin-left: auto;
+        margin-right: auto;
+        display: none;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .close {
-      color: #aaa;
-      float: right;
-      font-size: 28px;
-      font-weight: bold;
+    #testedWordsTable th, #testedWordsTable td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: center;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .close:hover,
-    .close:focus {
-      color: black;
-      text-decoration: none;
-      cursor: pointer;
+    #testedWordsTable th {
+        background-color: #f2f2f2;
+        background-color: rgba(255, 255, 255, 0.6);
     }
-    .word-list-table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .word-list-table th,
-    .word-list-table td {
-      border: 1px solid #ddd;
-      padding: 8px;
-      text-align: left;
-    }
-    .word-list-table th {
-      background-color: #f2f2f2;
-    }
-    .incorrect {
-      color: red;
-    }
-  </style>
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getDatabase, ref, get, child } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
-    import firebaseConfig from './firebaseConfig.js';
+    </style>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getDatabase, ref, get, child } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+        import firebaseConfig from './firebaseConfig.js';
 
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        let wordList = [];
+        let wordReview = [];
+        let totalWordsToday = 50;
+        let reviewPer = 20;
+        let totalReviewWords = Math.floor(totalWordsToday * reviewPer / 100);
+        let totalNewWords = totalWordsToday - totalReviewWords;
+        let wordsComp = 0;
+        let newwordsComp = 0;
+        let reviewWordsComp = 0;
+        let wordsTobedone = totalWordsToday;
+        let newwordsTobedone = totalNewWords;
+        let reviewWordsTobedone = totalReviewWords;
+        let wordTableVisible = false;
+        let testedWords = [];
+        let testedWordsTableVisible = false;
 
-    window.startApp = function() {
-      document.querySelector('.cover-container').style.display = 'none';
-      document.querySelector('.groups-container').style.display = 'flex';
-    };
-
-    document.addEventListener('DOMContentLoaded', function() {
-      document.querySelector('.cover-container').addEventListener('click', startApp);
-
-      const wordListRef = ref(database, 'wordlist');
-      const testResultsRef = ref(database, 'testResults');
-      const wordReviewRef = ref(database, 'wordreview');
-
-      get(wordListRef).then(snapshot => {
-        const words = snapshot.val() || [];
-        const groups = [];
-        for (let i = 0; i < words.length; i += 100) {
-          groups.push(words.slice(i, i + 100));
-        }
-        Promise.all(groups.map((group, index) => {
-          return Promise.all(group.map(word => {
-            return get(child(testResultsRef, word)).then(resultSnapshot => {
-              const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
-              return { word, ...resultData };
-            });
-          })).then(wordData => {
-            const testedWords = wordData.filter(w => w.totalTests > 0).length;
-            const incorrectWords = wordData.filter(w => w.incorrectCount > 0).length;
-            const lastTested = wordData.reduce((latest, w) => {
-              if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
-                return w.lastTested;
-              }
-              return latest;
-            }, null);
-            const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : 'N/A';
-            return {
-              index: index + 1,
-              start: index * 100 + 1,
-              end: index * 100 + group.length,
-              testedWords,
-              totalWords: group.length,
-              incorrectWords,
-              lastTested: lastTestedFormatted
-            };
-          });
-        })).then(groupData => {
-          groupData.sort((a, b) => a.index - b.index);
-          const completedGroups = groupData.filter(group => group.testedWords === group.totalWords).sort((a, b) => a.index - b.index);
-          const incompleteGroups = groupData.filter(group => group.testedWords !== group.totalWords);
-          displayGroups([...incompleteGroups, ...completedGroups]);
+        document.addEventListener('DOMContentLoaded', async () => {
+            document.getElementById('loading').style.display = 'block';
+            setButtonsDisabled(true); // 禁用按钮
+            await fetchData();
+            document.getElementById('loading').style.display = 'none';
+            setButtonsDisabled(false); // 启用按钮
+            updateStats();
+            displayProgressReview();
         });
 
-        get(wordReviewRef).then(reviewSnapshot => {
-          const reviewWords = reviewSnapshot.val() || [];
-          if (reviewWords.length > 0) {
-            Promise.all(reviewWords.map(word => {
-              return get(child(testResultsRef, word)).then(resultSnapshot => {
-                const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
-                return { word, ...resultData };
-              });
-            })).then(wordData => {
-              const testedWords = wordData.filter(w => w.totalTests > 0).length;
-              const incorrectWords = wordData.filter(w => w.incorrectCount > 0).length;
-              const lastTested = wordData.reduce((latest, w) => {
-                if (w.lastTested && (!latest || new Date(w.lastTested) > new Date(latest))) {
-                  return w.lastTested;
+        async function fetchData() {
+            const wordListRef = ref(database, 'wordlist');
+            const testResultsRef = ref(database, 'testResults');
+            const wordReviewRef = ref(database, 'wordreview');
+
+            const [wordListSnapshot, reviewSnapshot] = await Promise.all([
+                get(wordListRef),
+                get(wordReviewRef)
+            ]);
+
+            const allWords = wordListSnapshot.val() || [];
+            wordReview = reviewSnapshot.val() || [];
+
+            const wordDataPromises = allWords.map((word, index) => get(child(testResultsRef, word)).then(snapshot => {
+                const resultData = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0, lastTested: null };
+                if (resultData.lastTested && new Date(resultData.lastTested).toDateString() === new Date().toDateString()) {
+                    testedWords.push({ word, index, ...resultData });
                 }
-                return latest;
-              }, null);
-              const lastTestedFormatted = lastTested ? new Date(lastTested).toLocaleString('en-GB', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }).replace(',', '') : 'N/A';
-              const reviewGroupData = {
-                index: 'Review',
-                start: 1,
-                end: reviewWords.length,
-                testedWords,
-                totalWords: reviewWords.length,
-                incorrectWords,
-                lastTested: lastTestedFormatted
-              };
-              displayGroupReview(reviewGroupData);
+                return { word, index, ...resultData };
+            }));
+
+            const wordReviewDataPromises = wordReview.map((word, index) => get(child(testResultsRef, word)).then(snapshot => {
+                const resultData = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0, lastTested: null };
+                if (resultData.lastTested && new Date(resultData.lastTested).toDateString() === new Date().toDateString()) {
+                    testedWords.push({ word, index, ...resultData });
+                }
+                return { word, index, ...resultData };
+            }));
+
+            wordList = await Promise.all(wordDataPromises);
+            wordReview = await Promise.all(wordReviewDataPromises);
+            updateStats();
+        }
+
+        function sortWords(words) {
+            return words.sort((a, b) => {
+                if (a.totalTests !== b.totalTests) return a.totalTests - b.totalTests;
+                if (a.incorrectCount !== b.incorrectCount) return b.incorrectCount - a.incorrectCount;
+                if (a.index !== b.index) return a.index - b.index;
+                return new Date(a.lastTested) - new Date(b.lastTested);
             });
-          }
-        });
-      }).catch(error => {
-        console.error("Error getting data: ", error);
-      });
-    });
-
-    function displayGroups(groups) {
-      const container = document.getElementById('groups');
-      groups.forEach(group => {
-        const testedProgress = (group.testedWords / group.totalWords) * 100;
-        const incorrectProgress = group.testedWords > 0 ? (group.incorrectWords / group.testedWords) * 100 : 0;
-        const incorrectBarColor = incorrectProgress > 25 ? 'red' : 'blue';
-
-        const groupDiv = document.createElement('div');
-        groupDiv.className = `group ${group.testedWords > 0 ? 'tested' : 'not-tested'}`;
-        groupDiv.innerHTML = `
-          <h2>Group ${group.index}</h2>
-          <p>测试进程: ${group.testedWords}/${group.totalWords}</p>
-          <div class="progress-bar">
-            <div class="progress blue" style="width: ${testedProgress}%;"></div>
-          </div>
-          <p>错误情况: ${group.incorrectWords}/${group.testedWords}</p>
-          <div class="progress-bar">
-            <div class="progress ${incorrectBarColor}" style="width: ${incorrectProgress}%;"></div>
-          </div>
-          <p>测试时间: ${group.lastTested}</p>
-          <button onclick="startTest(${group.index})">Start Test</button>
-          <button onclick="viewWords(${group.index})">View Words</button>
-        `;
-        if (group.testedWords === group.totalWords) {
-          groupDiv.innerHTML += `<span style="color: green; font-weight: bold;">已经完成第一次测试！</span>`;
         }
-        container.appendChild(groupDiv);
-      });
-    }
 
-    function displayGroupReview(reviewGroupData) {
-      const container = document.getElementById('groups');
-      const testedProgress = (reviewGroupData.testedWords / reviewGroupData.totalWords) * 100;
-      const incorrectProgress = reviewGroupData.testedWords > 0 ? (reviewGroupData.incorrectWords / reviewGroupData.testedWords) * 100 : 0;
-      const incorrectBarColor = incorrectProgress > 25 ? 'red' : 'blue';
+        function updateStats() {
+            const testedTodaySet = new Set();
+            const newlyAddedToReview = new Set();
 
-      const groupDiv = document.createElement('div');
-      groupDiv.className = `group ${reviewGroupData.testedWords > 0 ? 'tested' : 'not-tested'}`;
-      groupDiv.innerHTML = `
-        <h2>Group Review</h2>
-        <p>测试进程: ${reviewGroupData.testedWords}/${reviewGroupData.totalWords}</p>
-        <div class="progress-bar">
-          <div class="progress blue" style="width: ${testedProgress}%;"></div>
-        </div>
-        <p>错误情况: ${reviewGroupData.incorrectWords}/${reviewGroupData.testedWords}</p>
-        <div class="progress-bar">
-          <div class="progress ${incorrectBarColor}" style="width: ${incorrectProgress}%;"></div>
-        </div>
-        <p>测试时间: ${reviewGroupData.lastTested}</p>
-        <button onclick="startTest('Review')">Start Test</button>
-        <button onclick="viewWords('Review')">View Words</button>
-      `;
-      container.prepend(groupDiv);
-    }
+            // Add words tested today from wordList to testedTodaySet
+            wordList.forEach(word => {
+                if (word.lastTested && new Date(convertToHongKongTime(word.lastTested)).toDateString() === new Date(convertToHongKongTime(new Date().toISOString())).toDateString()) {
+                    testedTodaySet.add(word.word);
+                }
+            });
 
-    window.startTest = function(groupNumber) {
-      window.location.href = `spelling.html?group=${groupNumber}`;
-    };
+            // Identify words that were newly added to wordReview today
+            wordReview.forEach(word => {
+                if (word.lastTested && new Date(convertToHongKongTime(word.lastTested)).toDateString() === new Date(convertToHongKongTime(new Date().toISOString())).toDateString() &&
+                    wordList.some(w => w.word === word.word)) {
+                    newlyAddedToReview.add(word.word);
+                }
+            });
 
-    window.viewWords = function(groupNumber) {
-      const wordListModal = document.getElementById('wordListModal');
-      const wordListTable = document.getElementById('wordListTable');
-      wordListTable.innerHTML = '<tr><th>序列号</th><th>单词</th><th>Dictionary</th><th>测试总数</th></tr>';
+            // Calculate newwordsComp
+            newwordsComp = Array.from(testedTodaySet).filter(word => wordList.some(w => w.word === word)).length;
 
-      const wordListRef = ref(database, 'wordlist');
-      const testResultsRef = ref(database, 'testResults');
-      get(wordListRef).then(snapshot => {
-        const words = snapshot.val() || [];
-        let groupWords;
-        if (groupNumber === 'Review') {
-          const wordReviewRef = ref(database, 'wordreview');
-          get(wordReviewRef).then(reviewSnapshot => {
-            groupWords = reviewSnapshot.val() || [];
-            populateWordListTable(groupWords, testResultsRef, wordListTable);
-          });
-        } else {
-          groupWords = words.slice((groupNumber - 1) * 100, groupNumber * 100);
-          populateWordListTable(groupWords, testResultsRef, wordListTable);
+            // Calculate reviewWordsComp excluding words newly added to wordReview today
+            reviewWordsComp = Array.from(testedTodaySet).filter(word =>
+                wordReview.some(w => w.word === word && !newlyAddedToReview.has(word))
+            ).length;
+
+            wordsComp = newwordsComp + reviewWordsComp;
+            updateWordCounts();
         }
-      });
-      wordListModal.style.display = 'block';
-    };
 
-    function populateWordListTable(groupWords, testResultsRef, wordListTable) {
-      Promise.all(groupWords.map((word, index) => {
-        return get(child(testResultsRef, word)).then(resultSnapshot => {
-          const resultData = resultSnapshot.val() || { totalTests: 0, incorrectCount: 0 };
-          return { word, index: index + 1, ...resultData };
-        });
-      })).then(wordData => {
-        wordData.forEach(data => {
-          const row = wordListTable.insertRow();
-          const cell1 = row.insertCell(0);
-          const cell2 = row.insertCell(1);
-          const cell3 = row.insertCell(2);
-          const cell4 = row.insertCell(3);
-          cell1.innerHTML = data.index;
-          cell2.innerHTML = data.incorrectCount > 0 ? `<span class="incorrect">${data.word}</span>` : data.word;
-          cell3.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${data.word}" target="_blank">Dictionary</a>`;
-          cell4.innerHTML = data.totalTests;
-        });
+        function updateWordCounts() {
+            const notTestedWords = wordList.filter(word => !word.lastTested).length;
 
-        const closeRow = wordListTable.insertRow();
-        const closeCell = closeRow.insertCell(0);
-        closeCell.colSpan = 4;
-        closeCell.innerHTML = '<button onclick="closeModal()">Close</button>';
-        closeCell.style.textAlign = 'center';
-      });
-    }
+            if (newwordsTobedone > notTestedWords) {
+                newwordsTobedone = notTestedWords;
+                reviewWordsTobedone = totalWordsToday - wordsComp - newwordsTobedone;
+            } else {
+                newwordsTobedone = Math.max(totalNewWords - newwordsComp, 0);
+                reviewWordsTobedone = Math.max(totalReviewWords - reviewWordsComp, 0);
+            }
+            wordsTobedone = newwordsTobedone + reviewWordsTobedone;
 
-    window.closeModal = function() {
-      document.getElementById('wordListModal').style.display = 'none';
-    };
+            document.getElementById('totalTask').innerText = `${totalWordsToday}`;
+            document.getElementById('newWordsTask').innerText = `${totalNewWords}`;
+            document.getElementById('reviewWordsTask').innerText = `${totalReviewWords}`;
 
-    window.onclick = function(event) {
-      const modal = document.getElementById('wordListModal');
-      if (event.target == modal) {
-        modal.style.display = 'none';
-      }
-    };
-  </script>
+            document.getElementById('completedToday').innerText = `${wordsComp}`;
+            document.getElementById('newWordsComp').innerText = `${newwordsComp}`;
+            document.getElementById('reviewWordsComp').innerText = `${reviewWordsComp}`;
+
+            document.getElementById('toBeDone').innerText = `${wordsTobedone}`;
+            document.getElementById('newWordsTobedone').innerText = `${newwordsTobedone}`;
+            document.getElementById('reviewWordsTobedone').innerText = `${reviewWordsTobedone}`;
+        }
+
+        function convertToHongKongTime(utcDateString) {
+            const utcDate = new Date(utcDateString);
+            return new Date(utcDate.toLocaleString("en-US", { timeZone: "Asia/Hong_Kong" }));
+        }
+
+        window.updateReviewPer = function(value) {
+            reviewPer = parseInt(value);
+            totalReviewWords = Math.floor(totalWordsToday * reviewPer / 100);
+            totalNewWords = totalWordsToday - totalReviewWords;
+            updateStats();
+            if (wordTableVisible) {
+                viewWords();
+            }
+        }
+
+        window.updateTotalWordsToday = function(value) {
+            totalWordsToday = parseInt(value);
+            totalReviewWords = Math.floor(totalWordsToday * reviewPer / 100);
+            totalNewWords = totalWordsToday - totalReviewWords;
+            updateStats();
+            if (wordTableVisible) {
+                viewWords();
+            }
+        }
+
+        function displayProgressReview() {
+            const stats = {};
+            wordList.forEach(word => {
+                stats[word.totalTests] = (stats[word.totalTests] || 0) + 1;
+            });
+
+            const table = document.getElementById('progressReviewTable');
+            table.innerHTML = '<tr><th>Total Tests</th><th>Number of Words</th></tr>';
+
+            Object.keys(stats).forEach(totalTests => {
+                const row = table.insertRow();
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                cell1.textContent = `${totalTests} 次`;
+                cell2.textContent = stats[totalTests];
+            });
+
+            displayTestDates();
+        }
+
+        function displayTestDates() {
+            const dates = {};
+            wordList.forEach(word => {
+                const date = word.lastTested ? convertToHongKongTime(word.lastTested).toISOString().split('T')[0] : 'N/A';
+                dates[date] = (dates[date] || 0) + 1;
+            });
+
+            const sortedDates = Object.keys(dates).sort((a, b) => new Date(b) - new Date(a));
+            const table = document.getElementById('testDatesTable');
+            table.innerHTML = '<tr><th>Test Date</th><th>Number of Words</th></tr>';
+
+            sortedDates.forEach(date => {
+                const row = table.insertRow();
+                const cell1 = row.insertCell(0);
+                const cell2 = row.insertCell(1);
+                cell1.textContent = date;
+                cell2.textContent = dates[date];
+            });
+        }
+
+        window.viewWords = function() {
+            if (wordTableVisible) {
+                document.getElementById('wordTable').innerHTML = '';
+                wordTableVisible = false;
+            } else {
+                const wordTable = document.getElementById('wordTable');
+                const sortedWordList = sortWords(wordList);
+                const sortedWordReview = sortWords(wordReview);
+
+                const newWords = sortedWordList.slice(0, newwordsTobedone);
+                const reviewWords = sortedWordReview.slice(0, reviewWordsTobedone);
+                const wordsToShow = [...newWords, ...reviewWords];
+
+                wordTable.innerHTML = '<tr><th>Index</th><th>Word</th><th>Pronunciation</th><th>Dictionary</th><th>Number of Tests</th></tr>';
+
+                wordsToShow.forEach(word => {
+                    const row = wordTable.insertRow();
+                    const cell1 = row.insertCell(0);
+                    const cell2 = row.insertCell(1);
+                    const cell3 = row.insertCell(2);
+                    const cell4 = row.insertCell(3);
+                    const cell5 = row.insertCell(4);
+                    cell1.textContent = word.index + 1;
+                    cell2.textContent = word.word;
+                    cell3.innerHTML = `<button onclick="playPronunciation('${word.word}')">Play</button>`;
+                    cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${word.word}" target="_blank">Dictionary</a>`;
+                    cell5.textContent = `${word.correctCount}/${word.incorrectCount}/${word.totalTests}`;
+                });
+
+                localStorage.setItem('wordsToShow', JSON.stringify(wordsToShow)); // Store the sorted words in local storage
+                wordTableVisible = true;
+            }
+        };
+
+        window.playPronunciation = function(word) {
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.6;
+            window.speechSynthesis.speak(utterance);
+        }
+
+        window.startTest = function() {
+            const sortedWordList = sortWords(wordList);
+            const sortedWordReview = sortWords(wordReview);
+
+            const newWords = sortedWordList.slice(0, newwordsTobedone);
+            const reviewWords = sortedWordReview.slice(0, reviewWordsTobedone);
+            const wordsToTest = [...newWords, ...reviewWords].map(word => word.word);
+
+            localStorage.setItem('wordsToTest', JSON.stringify(wordsToTest));
+            window.location.href = 'spelling.html';
+        };
+
+        window.loadMainContent = function() {
+            document.getElementById('cover').style.display = 'none';
+            document.getElementById('mainContent').style.display = 'block';
+        }
+
+        window.viewTestedWords = function() {
+            const testedWordsTable = document.getElementById('testedWordsTable');
+
+            if (testedWordsTableVisible) {
+                testedWordsTable.style.display = 'none';
+                testedWordsTableVisible = false;
+                return;
+            }
+
+            testedWordsTable.innerHTML = '<tr><th>Index</th><th>Word</th><th>Tested Time</th><th>Number of Tests</th></tr>';
+
+            testedWords.forEach(word => {
+                const isInWordList = wordList.some(w => w.word === word.word);
+                if (isInWordList || !newlyAddedToReview.has(word.word)) {
+                    const row = testedWordsTable.insertRow();
+                    const cell1 = row.insertCell(0);
+                    const cell2 = row.insertCell(1);
+                    const cell3 = row.insertCell(2);
+                    const cell4 = row.insertCell(3);
+                    cell1.textContent = isInWordList ? wordList.find(w => w.word === word.word).index + 1 : wordReview.find(w => w.word === word.word).index + 1;
+                    cell2.textContent = word.word;
+                    cell3.textContent = word.lastTested;
+                    cell4.textContent = `${word.correctCount}/${word.incorrectCount}/${word.totalTests}`;
+                }
+            });
+
+            testedWordsTable.style.display = 'table';
+            testedWordsTableVisible = true;
+        };
+
+        function setButtonsDisabled(disabled) {
+            document.querySelectorAll('.button-container button').forEach(button => {
+                button.disabled = disabled;
+            });
+        }
+    </script>
 </head>
 <body>
-  <div class="cover-container">
-    <h1>欢迎 Z 回来词汇训练</h1>
-  </div>
-
-  <h1>Zoe Vocabulary List</h1>
-  <div id="groups" class="groups-container"></div>
-
-  <div id="wordListModal" class="modal">
-    <span class="close" onclick="closeModal()">&times;</span>
-    <div class="modal-content">
-      <table id="wordListTable" class="word-list-table"></table>
+    <div id="cover" onclick="loadMainContent()">
+        欢迎 Z 回来词汇训练
     </div>
-  </div>
+
+    <div id="mainContent">
+        <h1>Zoe's Vocabulary Exercise</h1>
+
+        <div id="loading">Loading data...</div>
+
+        <section>
+            <h2>Today's Task</h2>
+            <table id="taskTable">
+                <thead>
+                    <tr>
+                        <th></th>
+                        <th>Total</th>
+                        <th>New</th>
+                        <th>Review</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Task</td>
+                        <td id="totalTask">50</td>
+                        <td id="newWordsTask">40</td>
+                        <td id="reviewWordsTask">10</td>
+                    </tr>
+                    <tr>
+                        <td>Completed</td>
+                        <td id="completedToday">0</td>
+                        <td id="newWordsComp">0</td>
+                        <td id="reviewWordsComp">0</td>
+                    </tr>
+                    <tr>
+                        <td>To Be Done</td>
+                        <td id="toBeDone">50</td>
+                        <td id="newWordsTobedone">40</td>
+                        <td id="reviewWordsTobedone">10</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="stats-container">
+                <p>
+                    Total Words Today:
+                    <select onchange="updateTotalWordsToday(this.value)">
+                        <option value="50">50</option>
+                        <option value="60">60</option>
+                        <option value="70">70</option>
+                        <option value="80">80</option>
+                    </select>
+                    Total Review Words Percentage:
+                    <select onchange="updateReviewPer(this.value)">
+                        <option value="0">0%</option>
+                        <option value="20" selected>20%</option>
+                        <option value="30">30%</option>
+                        <option value="40">40%</option>
+                        <option value="50">50%</option>
+                    </select>
+                </p>
+            </div>
+            <div class="button-container">
+                <button onclick="viewWords()">View Words</button>
+                <button onclick="startTest()">Start Test</button>
+                <button onclick="viewTestedWords()">Tested Words</button>
+            </div>
+            <table id="wordTable"></table>
+            <table id="testedWordsTable"></table>
+        </section>
+
+        <section>
+            <h2>Progress Review</h2>
+            <table id="progressReviewTable"></table>
+            <h2>Test Dates</h2>
+            <table id="testDatesTable"></table>
+        </section>
+    </div>
 </body>
 </html>
