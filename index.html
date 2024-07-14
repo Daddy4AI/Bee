@@ -302,7 +302,7 @@
                     cell2.textContent = word;
                     cell3.innerHTML = `<button onclick="playPronunciation('${word}')">Play</button>`;
                     cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${word}" target="_blank">Dictionary</a>`;
-                    cell5.textContent = '0/0/0'; // You may want to update this to show actual test data
+                    cell5.textContent = `${testResult.correctCount}/${testResult.incorrectCount}/${testResult.totalTests}`;
                 });
 
                 wordTableVisible = true;
