@@ -71,7 +71,7 @@
             font-size: 24px;
             color: darkgreen;
             width: 66.67%;
-            background-color: rgba(255, 255, 255, 0.6); /* Semi-transparent white background */
+            background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
             padding: 10px;
             border-radius: 5px;
             margin-left: auto;
@@ -292,7 +292,6 @@
                             playWord(words[currentWordIndex]);
                         }, 2000);
                     } else {
-                        saveIncorrectWords();
                         showCompletionMessage();
                     }
                 });
@@ -303,7 +302,12 @@
                 saveTestResult(words[currentWordIndex], false, now).then(() => {
                     addToWordReview(words[currentWordIndex]);
                 });
+                incorrectWordsSet.add(words[currentWordIndex]); // 添加错误的单词到 set
+                saveIncorrectWords(); // 保存错误的单词
             }
+
+
+
         };
 
         function showCompletionMessage() {
@@ -329,10 +333,23 @@
             document.getElementById('playWordButton').innerText = 'Play Word';
         };
 
-        window.saveIncorrectWords = function() {
-            const incorrectWords = Array.from(incorrectWordsSet);
+        window.saveIncorrectWords = async function() {
             const wordReviewRef = ref(database, 'wordreview');
-            set(wordReviewRef, incorrectWords);
+            try {
+                const snapshot = await get(wordReviewRef);
+                const currentWords = snapshot.val() || [];
+
+                // 合并现有的单词和新添加的错误单词
+                const updatedWords = Array.from(new Set([
+                    ...currentWords,
+                    ...Array.from(incorrectWordsSet).filter(word => !currentWords.includes(word))
+                ]));
+
+                await set(wordReviewRef, updatedWords);
+            } catch (error) {
+                console.error("Error saving incorrect words: ", error);
+            }
+
         };
 
         window.addToWordReview = async function(word) {
@@ -425,6 +442,6 @@
         <p>恭喜你完成这组单词的测试！</p>
         <button onclick="window.location.href='index.html'">返回首页</button>
     </div>
-    <div id="version">Updated version 0001</div>
+    <div id="version">Updated version 0003</div>
 </body>
 </html>

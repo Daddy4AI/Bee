@@ -1,112 +1,253 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Manage Word Lists</title>
-  <script type="module">
-    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-    import { getDatabase, ref, get, update, remove } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
-    import firebaseConfig from './firebaseConfig.js';
+    <title>Word Input</title>
+    <style>
+        body {
+            background: url('pics/backgd03.jpg') no-repeat center center fixed;
+            background-size: cover;
+            font-family: Arial, sans-serif;
+        }
+        #container {
+            width: 80%;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.6);
+        }
+        h1, h2 {
+            text-align: center;
+        }
+        #wordListSelector {
+            width: 200px;
+            font-size: 16px;
+        }
+        #wordListContent {
+            width: 100%;
+            height: 200px;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+        button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 10px;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        label[for="upload"] {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+            margin: 10px;
+        }
+        #testResultsTable {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+        #testResultsTable th, #testResultsTable td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: center;
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getDatabase, ref, get, set } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+        import firebaseConfig from './firebaseConfig.js';
 
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
 
-    function getSelectedList() {
-      return document.getElementById('listSelector').value;
-    }
-
-    function populateListSelector() {
-      const rootRef = ref(database);
-      get(rootRef).then(snapshot => {
-        const data = snapshot.val() || {};
-        const listSelector = document.getElementById('listSelector');
-        listSelector.innerHTML = ''; // Clear existing options
-        Object.keys(data).forEach(listName => {
-          const option = document.createElement('option');
-          option.value = listName;
-          option.textContent = listName;
-          listSelector.appendChild(option);
+        document.addEventListener('DOMContentLoaded', function() {
+            populateListSelector();
         });
-      }).catch(error => {
-        console.error("Error fetching word lists: ", error);
-      });
-    }
 
-    window.clearWordlist = function() {
-      const selectedList = getSelectedList();
-      const wordListRef = ref(database, selectedList);
-      remove(wordListRef).then(() => {
-        document.getElementById('status').innerText = 'Wordlist cleared successfully';
-      }).catch(error => {
-        console.error("Error clearing wordlist: ", error);
-      });
-    };
+        async function populateListSelector() {
+            const wordListSelector = document.getElementById('wordListSelector');
+            const wordListRef = ref(database, 'wordlist');
 
-    window.uploadWords = function() {
-      const file = document.getElementById('wordFile').files[0];
-      const reader = new FileReader();
-      const selectedList = getSelectedList();
+            try {
+                const snapshot = await get(wordListRef);
+                const wordListNames = Object.keys(snapshot.val() || {});
+                wordListNames.forEach(name => {
+                    const option = document.createElement('option');
+                    option.value = name;
+                    option.textContent = name;
+                    wordListSelector.appendChild(option);
+                });
+            } catch (error) {
+                console.error("Error populating list selector: ", error);
+            }
+        }
 
-      reader.onload = function(event) {
-        const words = event.target.result.split('\n').map(word => word.trim()).filter(word => word);
-        const updates = {};
+        document.getElementById('upload').addEventListener('change', handleFileUpload);
 
-        words.forEach((word, index) => {
-          updates[`/${selectedList}/${index}`] = word;
-        });
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            const reader = new FileReader();
+            const selectedList = document.getElementById('wordListSelector').value;
 
-        update(ref(database), updates).then(() => {
-          document.getElementById('status').innerText = 'Words uploaded successfully';
-        }).catch(error => {
-          console.error("Error uploading words: ", error);
-        });
-      };
+            reader.onload = async function(event) {
+                const words = event.target.result.split(/\r?\n/).map(word => word.trim()).filter(word => word.length > 0);
+                const wordListRef = ref(database, `wordlist/${selectedList}`);
 
-      reader.readAsText(file);
-    };
+                try {
+                    await set(wordListRef, words);
+                    alert("Words uploaded successfully!");
+                } catch (error) {
+                    console.error("Error uploading words: ", error);
+                    alert("Error uploading words.");
+                }
+            };
 
-    window.retrieveWordList = function() {
-      const selectedList = getSelectedList();
-      const wordListRef = ref(database, selectedList);
-      get(wordListRef).then(snapshot => {
-        const words = snapshot.val() || {};
-        const output = Object.values(words).map((word, index) => {
-          return `Word ${index + 1}: ${word}`;
-        }).join('<br>');
-        document.getElementById('wordListDisplay').innerHTML = output;
-      }).catch(error => {
-        console.error("Error retrieving word list: ", error);
-      });
-    };
+            reader.readAsText(file);
+        }
 
-    document.addEventListener('DOMContentLoaded', populateListSelector);
-  </script>
-  <style>
-    body {
-      position: relative;
-    }
-    #version {
-      position: absolute;
-      bottom: 10px;
-      right: 10px;
-      font-size: 16px;
-      color: black;
-    }
-  </style>
+        window.clearWordlist = async function() {
+            const selectedList = document.getElementById('wordListSelector').value;
+            const wordListRef = ref(database, `wordlist/${selectedList}`);
+
+            try {
+                await set(wordListRef, []);
+                alert("Word list cleared successfully!");
+            } catch (error) {
+                console.error("Error clearing word list: ", error);
+                alert("Error clearing word list.");
+            }
+        };
+
+        window.retrieveWordList = async function() {
+            const selectedList = document.getElementById('wordListSelector').value;
+            const wordListRef = ref(database, `wordlist/${selectedList}`);
+            const wordListContent = document.getElementById('wordListContent');
+
+            try {
+                const snapshot = await get(wordListRef);
+                const words = snapshot.val() || [];
+                wordListContent.value = Array.isArray(words) ? words.join('\n') : words;
+            } catch (error) {
+                console.error("Error retrieving word list: ", error);
+                wordListContent.value = "Error retrieving word list.";
+            }
+        };
+
+        window.modifyIncorrectCount = async function() {
+            const testResultsRef = ref(database, 'testResults');
+
+            try {
+                const snapshot = await get(testResultsRef);
+                const testResults = snapshot.val() || {};
+
+                for (const word in testResults) {
+                    if (testResults[word].totalTests > 0) {
+                        if (testResults[word].incorrectCount > 0) {
+                            testResults[word].incorrectCount = 1;
+                            testResults[word].correctCount = 0;
+                        } else {
+                            testResults[word].incorrectCount = 0;
+                            testResults[word].correctCount = 1;
+                        }
+                        testResults[word].totalTests = testResults[word].incorrectCount + testResults[word].correctCount;
+                    }
+                }
+
+                await set(testResultsRef, testResults);
+                alert("Modified incorrect counts successfully!");
+            } catch (error) {
+                console.error("Error modifying incorrect counts: ", error);
+                alert("Error modifying incorrect counts.");
+            }
+        };
+
+        window.createWordReview = async function() {
+            const selectedList = document.getElementById('wordListSelector').value;
+            const wordListRef = ref(database, `wordlist/${selectedList}`);
+            const testResultsRef = ref(database, 'testResults');
+            const wordReviewRef = ref(database, 'wordreview');
+
+            try {
+                // 清空当前的 wordreview 列表
+                await set(wordReviewRef, []);
+                console.log('Cleared wordreview list');
+
+                // 获取 wordlist
+                const wordListSnapshot = await get(wordListRef);
+                const wordList = wordListSnapshot.val() || [];
+                console.log('Fetched wordlist:', wordList);
+
+                // 确保 wordList 是一个数组
+                let wordArray = [];
+                if (typeof wordList === 'string') {
+                    wordArray = wordList.split(/\s+/).filter(word => word.length > 0);
+                } else if (Array.isArray(wordList)) {
+                    wordArray = wordList;
+                } else {
+                    wordArray = Object.values(wordList);
+                }
+                console.log('Processed wordArray:', wordArray);
+
+                // 获取 testResults
+                const testResultsSnapshot = await get(testResultsRef);
+                const testResults = testResultsSnapshot.val() || {};
+                console.log('Fetched test results:', testResults);
+
+                // 过滤出 incorrectCount > 0 的单词
+                const wordsToReview = Object.keys(testResults)
+                    .filter(word => testResults[word].incorrectCount > 0);
+
+                console.log('Filtered words to review (from testResults):', wordsToReview);
+
+                // 按 totalTests 排序（降序），再按 lastTested 时间排序（升序）
+                const sortedWordsToReview = wordsToReview
+                    .sort((a, b) => {
+                        const totalTestsDiff = testResults[b].totalTests - testResults[a].totalTests;
+                        if (totalTestsDiff !== 0) return totalTestsDiff;
+                        return new Date(testResults[a].lastTested) - new Date(testResults[b].lastTested);
+                    });
+
+                console.log('Sorted words to review (by totalTests and lastTested):', sortedWordsToReview);
+
+                // 映射回 wordlist 并排序
+                //const finalSortedWordsToReview = sortedWordsToReview
+                //    .map(word => ({ word, index: wordArray.indexOf(word) }))
+                //    .filter(entry => entry.index !== -1)
+                //    .sort((a, b) => a.index - b.index)
+                //    .map(({ word }) => word);
+
+                //console.log('Final sorted words to review (by index in wordlist):', finalSortedWordsToReview);
+
+                // 保存新的 wordreview 列表
+                await set(wordReviewRef, sortedWordsToReview);
+                console.log('Saved wordreview list:', sortedWordsToReview);
+
+                alert("Word review list created successfully!");
+            } catch (error) {
+                console.error("Error creating word review list: ", error);
+                alert("Error creating word review list.");
+            }
+        };
+    </script>
 </head>
 <body>
-  <h1>Manage Word Lists</h1>
-  <select id="listSelector">
-    <!-- Options will be populated dynamically -->
-  </select>
-  <br><br>
-  <input type="file" id="wordFile" accept=".txt">
-  <button onclick="uploadWords()">Upload Words</button>
-  <br><br>
-  <button onclick="clearWordlist()">Clear Wordlist</button>
-  <br><br>
-  <button onclick="retrieveWordList()">Retrieve Word List</button>
-  <p id="status"></p>
-  <div id="wordListDisplay"></div>
-  <div id="version">Version 100</div>
+    <div id="container">
+        <h1>Word Input</h1>
+        <div>
+            <label for="wordListSelector">Select Word List:</label>
+            <select id="wordListSelector"></select>
+        </div>
+        <div>
+            <label for="upload">Upload Word List:</label>
+            <input type="file" id="upload">
+        </div>
+        <button onclick="clearWordlist()">Clear Word List</button>
+        <button onclick="retrieveWordList()">Retrieve Word List</button>
+        <button onclick="modifyIncorrectCount()">修改错误次数为1</button>
+        <button onclick="createWordReview()">Create Word Review</button>
+        <textarea id="wordListContent" readonly></textarea>
+    </div>
 </body>
 </html>
