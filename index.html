@@ -2,129 +2,40 @@
 <html>
 <head>
     <title>Zoe's Vocabulary Exercise</title>
+    <link rel="stylesheet" type="text/css" href="styles.css">
     <style>
-
-    body {
-      background: url('pics/backgd05.jpg') no-repeat center center fixed;
-      background-size: cover;
-      font-family: Arial, sans-serif;
-    }
-    #cover {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: url('pics/cover.jpg') no-repeat center center fixed;
-        background-size: cover;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: black;
-        font-size: 60px;
-        text-align: center;
-        z-index: 10;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    #mainContent {
-        display: none;
-        padding: 20px;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    h1, h2 {
-        text-align: center;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    table {
-        width: 66.67%;
-        border-collapse: collapse;
-        margin-top: 20px;
-        margin-left: auto;
-        margin-right: auto;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    th, td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: center;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    th {
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    #loading {
-        text-align: center;
-        font-size: 20px;
-        margin-top: 20px;
-        color: white;
-        background-color: navy;
-        padding: 10px;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    .button-container, .stats-container {
-        text-align: center;
-        margin-top: 20px;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    button, select {
-        font-size: 16px;
-        padding: 10px 20px;
-        margin: 5px;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    #taskTable th, #taskTable td {
-        width: 25%;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    #wordTable th:nth-child(2), #wordTable td:nth-child(2) {
-        width: 40%;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    #wordTable th:nth-child(1), #wordTable th:nth.child(3), #wordTable th:nth.child(4),
-    #wordTable td:nth.child(1), #wordTable td:nth.child(3), #wordTable td:nth.child(4) {
-        width: 20%;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    #progressReviewTable th:nth.child(1), #progressReviewTable td:nth.child(1),
-    #testDatesTable th:nth.child(1), #testDatesTable td:nth.child(1) {
-        width: 40%;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    #progressReviewTable th:nth.child(2), #progressReviewTable td:nth.child(2),
-    #testDatesTable th:nth.child(2), #testDatesTable td:nth.child(2) {
-        width: 60%;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    #testedWordsTable {
-        width: 80%;
-        margin-top: 20px;
-        border-collapse: collapse;
-        margin-left: auto;
-        margin-right: auto;
-        display: none;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    #testedWordsTable th, #testedWordsTable td {
-        border: 1px solid #ddd;
-        padding: 8px;
-        text-align: center;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
-    #testedWordsTable th {
-        background-color: #f2f2f2;
-        background-color: rgba(255, 255, 255, 0.6);
-    }
+        body, html {
+            height: 100%;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        #cover {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            background-color: #f0f0f0;
+            text-align: center;
+            cursor: pointer;
+        }
+        #updateVersion {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            font-size: 16px;
+            color: black;
+        }
     </style>
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
-        import { getDatabase, ref, get, child } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+        import { getDatabase, ref, get, child, update } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
         import firebaseConfig from './firebaseConfig.js';
 
         const app = initializeApp(firebaseConfig);
         const database = getDatabase(app);
         let wordList = [];
         let wordReview = [];
-        let totalWordsToday = 50;
+        let totalWordsToday = 50; // Updated default value
         let reviewPer = 20;
         let totalReviewWords = Math.floor(totalWordsToday * reviewPer / 100);
         let totalNewWords = totalWordsToday - totalReviewWords;
@@ -140,11 +51,12 @@
 
         document.addEventListener('DOMContentLoaded', async () => {
             document.getElementById('loading').style.display = 'block';
-            setButtonsDisabled(true); // 禁用按钮
+            setButtonsDisabled(true); // Disable buttons
             await fetchData();
             document.getElementById('loading').style.display = 'none';
-            setButtonsDisabled(false); // 启用按钮
+            setButtonsDisabled(false); // Enable buttons
             updateStats();
+            generateWordsToTest();
             displayProgressReview();
         });
 
@@ -170,8 +82,9 @@
             }));
 
             const wordReviewDataPromises = wordReview.map((word, index) => get(child(testResultsRef, word)).then(snapshot => {
-                const resultData = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0, lastTested: null };
-                if (resultData.lastTested && new Date(resultData.lastTested).toDateString() === new Date().toDateString()) {
+                const resultData = snapshot.val() || { correctCount: 0, incorrectCount: 0, totalTests: 0, lastTested: null, dateaddtoReview: null };
+                if (resultData.lastTested && new Date(resultData.lastTested).toDateString() === new Date().toDateString() &&
+                    (!resultData.dateaddtoReview || new Date(resultData.dateaddtoReview).toDateString() !== new Date().toDateString())) {
                     testedWords.push({ word, index, ...resultData });
                 }
                 return { word, index, ...resultData };
@@ -194,6 +107,8 @@
         function updateStats() {
             const testedTodaySet = new Set();
             const newlyAddedToReview = new Set();
+            const newWordsSet = new Set();
+            const reviewWordsSet = new Set();
 
             // Add words tested today from wordList to testedTodaySet
             wordList.forEach(word => {
@@ -210,15 +125,52 @@
                 }
             });
 
-            // Calculate newwordsComp
-            newwordsComp = Array.from(testedTodaySet).filter(word => wordList.some(w => w.word === word)).length;
-
             // Calculate reviewWordsComp excluding words newly added to wordReview today
-            reviewWordsComp = Array.from(testedTodaySet).filter(word =>
-                wordReview.some(w => w.word === word && !newlyAddedToReview.has(word))
-            ).length;
+            const reviewWordsCompSet = new Set(Array.from(testedTodaySet).filter(word =>
+                wordReview.some(w => w.word === word && (!w.dateaddtoReview || new Date(w.dateaddtoReview).toDateString() !== new Date().toDateString()))
+            ));
+
+            // Calculate newwordsComp excluding words that are in reviewWordsCompSet
+            Array.from(testedTodaySet).forEach(word => {
+                if (wordList.some(w => w.word === word) && !reviewWordsCompSet.has(word)) {
+                    newWordsSet.add(word);
+                }
+            });
+
+            // Calculate the counts
+            newwordsComp = newWordsSet.size;
+            reviewWordsComp = reviewWordsCompSet.size;
+
+            // Ensure there are no duplicate words in newWordsSet and reviewWordsCompSet
+            newWordsSet.forEach(word => reviewWordsCompSet.delete(word));
 
             wordsComp = newwordsComp + reviewWordsComp;
+
+            // Save completedToday to localStorage
+            localStorage.setItem('completedToday', wordsComp);
+
+            testedWords = Array.from(newWordsSet).map(word => {
+                const wordObj = wordList.find(w => w.word === word);
+                return {
+                    word: word,
+                    index: wordObj.index,
+                    lastTested: wordObj.lastTested,
+                    correctCount: wordObj.correctCount,
+                    incorrectCount: wordObj.incorrectCount,
+                    totalTests: wordObj.totalTests
+                };
+            }).concat(Array.from(reviewWordsCompSet).map(word => {
+                const wordObj = wordReview.find(w => w.word === word);
+                return {
+                    word: word,
+                    index: wordObj.index,
+                    lastTested: wordObj.lastTested,
+                    correctCount: wordObj.correctCount,
+                    incorrectCount: wordObj.incorrectCount,
+                    totalTests: wordObj.totalTests
+                };
+            }));
+
             updateWordCounts();
         }
 
@@ -257,6 +209,7 @@
             totalReviewWords = Math.floor(totalWordsToday * reviewPer / 100);
             totalNewWords = totalWordsToday - totalReviewWords;
             updateStats();
+            generateWordsToTest();
             if (wordTableVisible) {
                 viewWords();
             }
@@ -267,9 +220,21 @@
             totalReviewWords = Math.floor(totalWordsToday * reviewPer / 100);
             totalNewWords = totalWordsToday - totalReviewWords;
             updateStats();
+            generateWordsToTest();
             if (wordTableVisible) {
                 viewWords();
             }
+        }
+
+        function generateWordsToTest() {
+            const sortedWordList = sortWords(wordList);
+            const sortedWordReview = sortWords(wordReview);
+
+            const newWords = sortedWordList.slice(0, newwordsTobedone);
+            const reviewWords = sortedWordReview.slice(0, reviewWordsTobedone);
+            const wordsToTest = [...newWords, ...reviewWords].map(word => word.word);
+
+            localStorage.setItem('wordsToTest', JSON.stringify(wordsToTest));
         }
 
         function displayProgressReview() {
@@ -318,30 +283,28 @@
                 wordTableVisible = false;
             } else {
                 const wordTable = document.getElementById('wordTable');
-                const sortedWordList = sortWords(wordList);
-                const sortedWordReview = sortWords(wordReview);
-
-                const newWords = sortedWordList.slice(0, newwordsTobedone);
-                const reviewWords = sortedWordReview.slice(0, reviewWordsTobedone);
-                const wordsToShow = [...newWords, ...reviewWords];
+                const wordsToShow = JSON.parse(localStorage.getItem('wordsToTest'));
 
                 wordTable.innerHTML = '<tr><th>Index</th><th>Word</th><th>Pronunciation</th><th>Dictionary</th><th>Number of Tests</th></tr>';
 
-                wordsToShow.forEach(word => {
+                wordsToShow.forEach((word, index) => {
                     const row = wordTable.insertRow();
                     const cell1 = row.insertCell(0);
                     const cell2 = row.insertCell(1);
                     const cell3 = row.insertCell(2);
                     const cell4 = row.insertCell(3);
                     const cell5 = row.insertCell(4);
-                    cell1.textContent = word.index + 1;
-                    cell2.textContent = word.word;
-                    cell3.innerHTML = `<button onclick="playPronunciation('${word.word}')">Play</button>`;
-                    cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${word.word}" target="_blank">Dictionary</a>`;
-                    cell5.textContent = `${word.correctCount}/${word.incorrectCount}/${word.totalTests}`;
+
+                    const wordListIndex = wordList.find(w => w.word === word)?.index + 1;
+                    const wordReviewIndex = wordReview.find(w => w.word === word)?.index + 1;
+
+                    cell1.textContent = wordListIndex !== undefined ? wordListIndex : (wordReviewIndex !== undefined ? wordReviewIndex : '');
+                    cell2.textContent = word;
+                    cell3.innerHTML = `<button onclick="playPronunciation('${word}')">Play</button>`;
+                    cell4.innerHTML = `<a href="https://www.merriam-webster.com/dictionary/${word}" target="_blank">Dictionary</a>`;
+                    cell5.textContent = '0/0/0'; // You may want to update this to show actual test data
                 });
 
-                localStorage.setItem('wordsToShow', JSON.stringify(wordsToShow)); // Store the sorted words in local storage
                 wordTableVisible = true;
             }
         };
@@ -354,15 +317,12 @@
         }
 
         window.startTest = function() {
-            const sortedWordList = sortWords(wordList);
-            const sortedWordReview = sortWords(wordReview);
-
-            const newWords = sortedWordList.slice(0, newwordsTobedone);
-            const reviewWords = sortedWordReview.slice(0, reviewWordsTobedone);
-            const wordsToTest = [...newWords, ...reviewWords].map(word => word.word);
-
-            localStorage.setItem('wordsToTest', JSON.stringify(wordsToTest));
-            window.location.href = 'spelling.html';
+            if (newwordsTobedone === 0 && reviewWordsTobedone === 0) {
+                localStorage.setItem('wordsToTest', JSON.stringify([]));
+                alert("你设置的任务已经完成！但是你可以修改今天测试总数来继续测试！");
+            } else {
+                window.location.href = 'spelling.html';
+            }
         };
 
         window.loadMainContent = function() {
@@ -409,11 +369,12 @@
 </head>
 <body>
     <div id="cover" onclick="loadMainContent()">
-        欢迎 Z 回来词汇训练
+        欢迎 B 回来词汇训练
+        <div id="updateVersion">Update version 0001</div>
     </div>
 
-    <div id="mainContent">
-        <h1>Zoe's Vocabulary Exercise</h1>
+    <div id="mainContent" style="display: none;">
+        <h1>Bee's Vocabulary Exercise</h1>
 
         <div id="loading">Loading data...</div>
 
@@ -431,7 +392,7 @@
                 <tbody>
                     <tr>
                         <td>Task</td>
-                        <td id="totalTask">50</td>
+                        <td id="totalTask">50</td> <!-- Updated default value -->
                         <td id="newWordsTask">40</td>
                         <td id="reviewWordsTask">10</td>
                     </tr>
@@ -443,7 +404,7 @@
                     </tr>
                     <tr>
                         <td>To Be Done</td>
-                        <td id="toBeDone">50</td>
+                        <td id="toBeDone">50</td> <!-- Updated default value -->
                         <td id="newWordsTobedone">40</td>
                         <td id="reviewWordsTobedone">10</td>
                     </tr>
@@ -453,10 +414,10 @@
                 <p>
                     Total Words Today:
                     <select onchange="updateTotalWordsToday(this.value)">
-                        <option value="50">50</option>
-                        <option value="60">60</option>
-                        <option value="70">70</option>
-                        <option value="80">80</option>
+                        <option value="15" selected>50</option>
+                        <option value="17">55</option>
+                        <option value="20">60</option>
+                        <option value="25">70</option>
                     </select>
                     Total Review Words Percentage:
                     <select onchange="updateReviewPer(this.value)">
@@ -464,7 +425,7 @@
                         <option value="20" selected>20%</option>
                         <option value="30">30%</option>
                         <option value="40">40%</option>
-                        <option value="50">50%</option>
+                        <option value="50%">50%</option>
                     </select>
                 </p>
             </div>
