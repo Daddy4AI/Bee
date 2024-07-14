@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Zoe's Vocabulary Exercise</title>
+    <title>Z's Vocabulary Exercise</title>
     <link rel="stylesheet" type="text/css" href="styles.css">
     <style>
         body, html {
@@ -297,6 +297,7 @@
 
                     const wordListIndex = wordList.find(w => w.word === word)?.index + 1;
                     const wordReviewIndex = wordReview.find(w => w.word === word)?.index + 1;
+                    const testResult = wordList.find(w => w.word === word) || wordReview.find(w => w.word === word);
 
                     cell1.textContent = wordListIndex !== undefined ? wordListIndex : (wordReviewIndex !== undefined ? wordReviewIndex : '');
                     cell2.textContent = word;
@@ -370,7 +371,7 @@
 <body>
     <div id="cover" onclick="loadMainContent()">
         欢迎 B 回来词汇训练
-        <div id="updateVersion">Update version 0001</div>
+        <div id="updateVersion">Update version 0002</div>
     </div>
 
     <div id="mainContent" style="display: none;">
@@ -414,10 +415,10 @@
                 <p>
                     Total Words Today:
                     <select onchange="updateTotalWordsToday(this.value)">
-                        <option value="15" selected>50</option>
-                        <option value="17">55</option>
-                        <option value="20">60</option>
-                        <option value="25">70</option>
+                        <option value="15" selected>15</option>
+                        <option value="17">17</option>
+                        <option value="20">20</option>
+                        <option value="25">25</option>
                     </select>
                     Total Review Words Percentage:
                     <select onchange="updateReviewPer(this.value)">
