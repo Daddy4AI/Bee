@@ -299,8 +299,9 @@
                 resultElement.innerHTML = `错误，正确的拼写为 <strong>${words[currentWordIndex]}</strong>\n<a href="https://www.merriam-webster.com/dictionary/${words[currentWordIndex]}" target="_blank">查询本单词</a>`;
                 resultElement.className = 'incorrect';
                 playWordButton.innerText = 'Test Again';
+                addToWordReview(words[currentWordIndex]);
                 saveTestResult(words[currentWordIndex], false, now).then(() => {
-                    addToWordReview(words[currentWordIndex]);
+
                 });
                 incorrectWordsSet.add(words[currentWordIndex]); // 添加错误的单词到 set
                 saveIncorrectWords(); // 保存错误的单词
@@ -363,7 +364,13 @@
                 if (!currentWords.includes(word)) {
                     currentWords.push(word);
                     await set(wordReviewRef, currentWords);
+
+                    console.log('Added word to review list:', currentWords); // 调试信息
+
+                    console.log('Updating wordRef with dateaddtoReview:', wordRef);
                     await update(wordRef, { dateaddtoReview: new Date().toISOString() });
+                    console.log('Successfully updated wordRef with dateaddtoReview');
+
                 }
             } catch (error) {
                 console.error("Error adding word to review list: ", error);
@@ -442,6 +449,6 @@
         <p>恭喜你完成这组单词的测试！</p>
         <button onclick="window.location.href='index.html'">返回首页</button>
     </div>
-    <div id="version">Updated version 0003</div>
+    <div id="version">Updated version 0005</div>
 </body>
 </html>
