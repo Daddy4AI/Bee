@@ -261,19 +261,41 @@
             const dates = {};
             wordList.forEach(word => {
                 const date = word.lastTested ? convertToHongKongTime(word.lastTested).toISOString().split('T')[0] : 'N/A';
-                dates[date] = (dates[date] || 0) + 1;
+                if (!dates[date]) {
+                    dates[date] = {
+                        count: 0,
+                        earliest: new Date().getTime(), // Initialize to a large value
+                        latest: 0 // Initialize to a small value
+                    };
+                }
+                dates[date].count++;
+                const testedTime = new Date(convertToHongKongTime(word.lastTested)).getTime();
+                if (testedTime < dates[date].earliest) {
+                    dates[date].earliest = testedTime;
+                }
+                if (testedTime > dates[date].latest) {
+                    dates[date].latest = testedTime;
+                }
             });
 
             const sortedDates = Object.keys(dates).sort((a, b) => new Date(b) - new Date(a));
             const table = document.getElementById('testDatesTable');
-            table.innerHTML = '<tr><th>Test Date</th><th>Number of Words</th></tr>';
+            table.innerHTML = '<tr><th>Test Date</th><th>Number of Words</th><th>Total Minutes</th><th>Minutes Per Word</th></tr>';
 
             sortedDates.forEach(date => {
+                const totalMinutes = Math.round((dates[date].latest - dates[date].earliest) / (1000 * 60));
+                const minutesPerWord = totalMinutes / dates[date].count;
+
                 const row = table.insertRow();
                 const cell1 = row.insertCell(0);
                 const cell2 = row.insertCell(1);
+                const cell3 = row.insertCell(2);
+                const cell4 = row.insertCell(3);
+
                 cell1.textContent = date;
-                cell2.textContent = dates[date];
+                cell2.textContent = dates[date].count;
+                cell3.textContent = totalMinutes;
+                cell4.textContent = minutesPerWord.toFixed(2); // Show 2 decimal places
             });
         }
 
