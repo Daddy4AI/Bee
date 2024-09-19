@@ -35,7 +35,7 @@
         const database = getDatabase(app);
         let wordList = [];
         let wordReview = [];
-        let totalWordsToday = 50; // Updated default value
+        let totalWordsToday = 25; // Updated default value
         let reviewPer = 20;
         let totalReviewWords = Math.floor(totalWordsToday * reviewPer / 100);
         let totalNewWords = totalWordsToday - totalReviewWords;
@@ -421,7 +421,7 @@
                 <tbody>
                     <tr>
                         <td>Task</td>
-                        <td id="totalTask">50</td> <!-- Updated default value -->
+                        <td id="totalTask">25</td> <!-- Updated default value -->
                         <td id="newWordsTask">40</td>
                         <td id="reviewWordsTask">10</td>
                     </tr>
@@ -433,9 +433,9 @@
                     </tr>
                     <tr>
                         <td>To Be Done</td>
-                        <td id="toBeDone">50</td> <!-- Updated default value -->
-                        <td id="newWordsTobedone">40</td>
-                        <td id="reviewWordsTobedone">10</td>
+                        <td id="toBeDone">25</td> <!-- Updated default value -->
+                        <td id="newWordsTobedone">20</td>
+                        <td id="reviewWordsTobedone">5</td>
                     </tr>
                 </tbody>
             </table>
@@ -443,9 +443,9 @@
                 <p>
                     Total Words Today:
                     <select onchange="updateTotalWordsToday(this.value)">
-                        <option value="50" selected>50</option>
-                        <option value="55">55</option>
-                        <option value="60">60</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="75">75</option>
                         <option value="100">100</option>
                     </select>
                     Total Review Words Percentage:
