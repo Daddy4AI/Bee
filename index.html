@@ -342,7 +342,7 @@
         window.startTest = function() {
             if (newwordsTobedone === 0 && reviewWordsTobedone === 0) {
                 localStorage.setItem('wordsToTest', JSON.stringify([]));
-                alert("你设置的任务已经完成！但是你可以修改今天测试总数来继续测试！");
+                alert("You have finished today's task！but you can always add more！");
             } else {
                 window.location.href = 'spelling.html';
             }
@@ -392,7 +392,7 @@
 </head>
 <body>
     <div id="cover" onclick="loadMainContent()">
-        欢迎 Z 回来词汇训练
+        Welcome Z back to training
         <div id="updateVersion">Update version 0005</div>
     </div>
 
