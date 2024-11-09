@@ -36,7 +36,7 @@
         let wordList = [];
         let wordReview = [];
         let totalWordsToday = 25; // Updated default value
-        let reviewPer = 20;
+        let reviewPer = 0;
         let totalReviewWords = Math.floor(totalWordsToday * reviewPer / 100);
         let totalNewWords = totalWordsToday - totalReviewWords;
         let wordsComp = 0;
@@ -450,8 +450,8 @@
                     </select>
                     Total Review Words Percentage:
                     <select onchange="updateReviewPer(this.value)">
-                        <option value="0">0%</option>
-                        <option value="20" selected>20%</option>
+                        <option value="0" selected>0%</option>
+                        <option value="20">20%</option>
                         <option value="30">30%</option>
                         <option value="40">40%</option>
                         <option value="50%">50%</option>
