@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        #stats {
+            margin: 20px;
+        }
+        #resultsTable {
+            width: 80%;
+            margin: 20px auto;
+            border-collapse: collapse;
+        }
+        #resultsTable th, #resultsTable td {
+            border: 1px solid #ddd;
+            padding: 8px;
+        }
+        #resultsTable th {
+            background-color: #f2f2f2;
+        }
+    </style>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
+        import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-database.js';
+        import firebaseConfig from './firebaseConfig.js';
+
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+
+        async function fetchResults() {
+            const testResultsRef = ref(database, 'testResults');
+            const snapshot = await get(testResultsRef);
+            const testResults = snapshot.val() || {};
+
+            let totalWords = 0;
+            let totalCorrect = 0;
+            let totalTests = 0;
+
+            const tableBody = document.getElementById('resultsTableBody');
+            tableBody.innerHTML = '';  // Clear previous content
+
+            for (const [word, result] of Object.entries(testResults)) {
+                const correctCount = result.correctCount || 0;
+                const incorrectCount = result.incorrectCount || 0;
+                const totalCount = correctCount + incorrectCount;
+
+                totalWords++;
+                totalCorrect += correctCount;
+                totalTests += totalCount;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `<td>${word}</td><td>${correctCount}</td><td>${incorrectCount}</td><td>${totalCount}</td>`;
+                tableBody.appendChild(row);
+            }
+
+            const correctPercentage = totalTests > 0 ? ((totalCorrect / totalTests) * 100).toFixed(2) : 0;
+            document.getElementById('totalWords').textContent = totalWords;
+            document.getElementById('correctPercentage').textContent = correctPercentage;
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchResults);
+    </script>
+</head>
+<body>
+    <h1>Test Results Summary</h1>
+    <div id="stats">
+        <p>Total Words Tested: <span id="totalWords">0</span></p>
+        <p>Correct Answer Percentage: <span id="correctPercentage">0</span>%</p>
+    </div>
+    <table id="resultsTable">
+        <thead>
+            <tr>
+                <th>Word</th>
+                <th>Correct Count</th>
+                <th>Incorrect Count</th>
+                <th>Total Tests</th>
+            </tr>
+        </thead>
+        <tbody id="resultsTableBody"></tbody>
+    </table>
+</body>
+</html>
