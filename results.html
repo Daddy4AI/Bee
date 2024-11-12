@@ -48,12 +48,13 @@
             const testResultsRef = ref(database, 'testResults');
             const wordListRef = ref(database, 'wordlist');
 
-            // Fetch wordlist to get the correct order
+            // Fetch testResults to get the words that have been tested
+            const testResultsSnapshot = await get(testResultsRef);
+            const testResults = testResultsSnapshot.val() || {};
+
+            // Fetch wordlist to get the order of words
             const wordListSnapshot = await get(wordListRef);
             const wordList = wordListSnapshot.val() || [];
-            
-            const snapshot = await get(testResultsRef);
-            const testResults = snapshot.val() || {};
 
             let totalWords = 0;
             let totalCorrect = 0;
@@ -62,13 +63,15 @@
             const tableBody = document.getElementById('resultsTableBody');
             tableBody.innerHTML = '';  // Clear previous content
 
-            // Sort testResults by the order in wordlist
-            const sortedResults = wordList.map(word => ({
-                word,
-                ...(testResults[word] || { correctCount: 0, incorrectCount: 0 })
-            }));
+            // Filter and sort testResults by the order in wordlist
+            const sortedResults = wordList
+                .filter(word => word in testResults) // Include only words present in testResults
+                .map(word => ({
+                    word,
+                    ...testResults[word]
+                }));
 
-            sortedResults.forEach(({ word, correctCount, incorrectCount }) => {
+            sortedResults.forEach(({ word, correctCount = 0, incorrectCount = 0 }) => {
                 const totalCount = correctCount + incorrectCount;
                 totalWords++;
                 totalCorrect += correctCount;
