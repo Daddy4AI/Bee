@@ -65,20 +65,21 @@
 
             // Filter and sort testResults by the order in wordlist
             const sortedResults = wordList
-                .filter(word => word in testResults) // Include only words present in testResults
-                .map(word => ({
+                .map((word, index) => ({
                     word,
+                    index, // Store the index from wordlist
                     ...testResults[word]
-                }));
+                }))
+                .filter(({ word }) => word in testResults); // Include only words present in testResults
 
-            sortedResults.forEach(({ word, correctCount = 0, incorrectCount = 0 }) => {
+            sortedResults.forEach(({ word, index, correctCount = 0, incorrectCount = 0 }) => {
                 const totalCount = correctCount + incorrectCount;
                 totalWords++;
                 totalCorrect += correctCount;
                 totalTests += totalCount;
 
                 const row = document.createElement('tr');
-                row.innerHTML = `<td>${word}</td><td>${correctCount}</td><td>${incorrectCount}</td><td>${totalCount}</td>`;
+                row.innerHTML = `<td>${index + 1}</td><td>${word}</td><td>${correctCount}</td><td>${incorrectCount}</td><td>${totalCount}</td>`;
                 
                 if (incorrectCount > 0) {
                     row.classList.add('highlight');
@@ -107,6 +108,7 @@
     <table id="resultsTable">
         <thead>
             <tr>
+                <th>ID</th> <!-- New ID column header -->
                 <th>Word</th>
                 <th>Correct Count</th>
                 <th>Incorrect Count</th>
