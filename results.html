@@ -23,6 +23,9 @@
         #resultsTable th {
             background-color: #f2f2f2;
         }
+        .highlight {
+            background-color: #e0f7fa; /* Light blue background for rows with incorrect counts */
+        }
     </style>
     <script type="module">
         import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.6.1/firebase-app.js';
@@ -55,6 +58,12 @@
 
                 const row = document.createElement('tr');
                 row.innerHTML = `<td>${word}</td><td>${correctCount}</td><td>${incorrectCount}</td><td>${totalCount}</td>`;
+                
+                // Add highlight class if incorrectCount > 0
+                if (incorrectCount > 0) {
+                    row.classList.add('highlight');
+                }
+                
                 tableBody.appendChild(row);
             }
 
