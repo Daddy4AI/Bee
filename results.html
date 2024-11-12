@@ -24,7 +24,16 @@
             background-color: #f2f2f2;
         }
         .highlight {
-            background-color: #e0f7fa; /* Light blue background for rows with incorrect counts */
+            background-color: #e0f7fa;
+        }
+        /* Floating icon for navigation */
+        #backIcon {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #007bff;
         }
     </style>
     <script type="module">
@@ -37,6 +46,12 @@
 
         async function fetchResults() {
             const testResultsRef = ref(database, 'testResults');
+            const wordListRef = ref(database, 'wordlist');
+
+            // Fetch wordlist to get the correct order
+            const wordListSnapshot = await get(wordListRef);
+            const wordList = wordListSnapshot.val() || [];
+            
             const snapshot = await get(testResultsRef);
             const testResults = snapshot.val() || {};
 
@@ -47,11 +62,14 @@
             const tableBody = document.getElementById('resultsTableBody');
             tableBody.innerHTML = '';  // Clear previous content
 
-            for (const [word, result] of Object.entries(testResults)) {
-                const correctCount = result.correctCount || 0;
-                const incorrectCount = result.incorrectCount || 0;
-                const totalCount = correctCount + incorrectCount;
+            // Sort testResults by the order in wordlist
+            const sortedResults = wordList.map(word => ({
+                word,
+                ...(testResults[word] || { correctCount: 0, incorrectCount: 0 })
+            }));
 
+            sortedResults.forEach(({ word, correctCount, incorrectCount }) => {
+                const totalCount = correctCount + incorrectCount;
                 totalWords++;
                 totalCorrect += correctCount;
                 totalTests += totalCount;
@@ -59,13 +77,12 @@
                 const row = document.createElement('tr');
                 row.innerHTML = `<td>${word}</td><td>${correctCount}</td><td>${incorrectCount}</td><td>${totalCount}</td>`;
                 
-                // Add highlight class if incorrectCount > 0
                 if (incorrectCount > 0) {
                     row.classList.add('highlight');
                 }
-                
+
                 tableBody.appendChild(row);
-            }
+            });
 
             const correctPercentage = totalTests > 0 ? ((totalCorrect / totalTests) * 100).toFixed(2) : 0;
             document.getElementById('totalWords').textContent = totalWords;
@@ -76,6 +93,9 @@
     </script>
 </head>
 <body>
+    <!-- Floating icon for navigation back to index.html -->
+    <div id="backIcon" onclick="window.location.href='index.html'">&#8592; Back</div>
+
     <h1>Test Results Summary</h1>
     <div id="stats">
         <p>Total Words Tested: <span id="totalWords">0</span></p>
