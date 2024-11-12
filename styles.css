@@ -65,6 +65,7 @@ th {
 .button-container, .stats-container {
     text-align: center;
     margin-top: 20px;
+    margin-right: 10px; /* Adjust spacing between buttons */
     background-color: rgba(255, 255, 255, 0.6);
 }
 button, select {
